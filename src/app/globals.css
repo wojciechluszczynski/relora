@@ -1148,6 +1148,17 @@ section {
   min-width: 0;
 }
 
+.r-person-card.as-button {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+}
+
+.r-person-card.selected {
+  border-color: rgba(0, 111, 106, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(0, 111, 106, 0.2);
+}
+
 .r-card-head,
 .r-identity {
   display: grid;
@@ -1260,6 +1271,63 @@ section {
   padding: 14px;
 }
 
+.r-engine-chip {
+  border: 1px solid var(--r-line);
+  border-radius: 8px;
+  background: white;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.r-engine-chip span,
+.r-engine-output span {
+  color: var(--r-muted);
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.r-engine-chip strong {
+  font-size: 20px;
+}
+
+.r-engine-chip button {
+  min-height: 34px;
+  border: 1px solid var(--r-line);
+  border-radius: 8px;
+  background: var(--r-dark);
+  color: white;
+}
+
+.engine-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.95fr);
+}
+
+.r-engine-output {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.r-engine-output > div {
+  border: 1px solid var(--r-line);
+  border-radius: 8px;
+  background: white;
+  padding: 12px;
+}
+
+.r-engine-output > div:first-child strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
+.r-two.compact {
+  grid-template-columns: 1fr;
+}
+
 .r-box.private {
   background: rgba(0, 111, 106, 0.055);
 }
@@ -1319,6 +1387,87 @@ section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
+}
+
+.r-connected-graph {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--r-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(217, 213, 202, 0.45) 1px, transparent 1px),
+    linear-gradient(rgba(217, 213, 202, 0.45) 1px, transparent 1px),
+    #fffefa;
+  background-size: 40px 40px;
+}
+
+.r-connected-graph svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.r-connected-graph line {
+  stroke: rgba(18, 23, 34, 0.18);
+  stroke-width: 0.45;
+  vector-effect: non-scaling-stroke;
+}
+
+.r-connected-graph line.active {
+  stroke: rgba(0, 111, 106, 0.76);
+  stroke-width: 1.2;
+}
+
+.r-graph-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: min(170px, 22vw);
+  min-height: 68px;
+  border: 1px solid var(--r-line);
+  border-radius: 8px;
+  background: white;
+  color: var(--r-ink);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 9px;
+  box-shadow: 0 16px 38px rgba(18, 23, 34, 0.08);
+}
+
+.r-graph-node:disabled {
+  cursor: default;
+}
+
+.r-graph-node strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.r-graph-node span {
+  color: var(--r-muted);
+  font-family: var(--font-data);
+  font-size: 11px;
+}
+
+.r-graph-node.person {
+  border-color: rgba(0, 111, 106, 0.35);
+}
+
+.r-graph-node.org {
+  border-color: rgba(155, 107, 19, 0.36);
+}
+
+.r-graph-node.topic {
+  border-color: rgba(142, 41, 71, 0.3);
+}
+
+.r-graph-node.active {
+  border-color: rgba(0, 111, 106, 0.86);
+  box-shadow:
+    0 16px 38px rgba(18, 23, 34, 0.1),
+    0 0 0 3px rgba(0, 111, 106, 0.12);
 }
 
 .r-graph-group {
