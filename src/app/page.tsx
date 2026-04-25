@@ -1,531 +1,358 @@
 const people = [
   {
+    initials: "JL",
+    name: "Julia Lewandowska",
+    role: "Zastępczyni prezydenta ds. cyfryzacji",
+    organization: "Urząd Miasta Wrocławia",
+    stage: "Po kontakcie",
+    priority: "wysoki",
+    confidence: 86,
+    next: "Sprawdzić kontekst konsultacji społecznych i zatwierdzić krótką wiadomość.",
+    publicFacts: ["odpowiada za cyfrowe usługi mieszkańca", "występuje na panelach smart city"],
+    userContext: ["rozmowa po konferencji GovTech", "unikać tonu sprzedażowego"],
+  },
+  {
     initials: "AK",
     name: "Anna Kowalska",
     role: "Head of Partnerships",
-    company: "Example Ventures",
-    stage: "Warm",
-    score: 82,
-    needs: ["warm lead sourcing", "growth partnerships"],
-    angle: "Nawiązanie do wcześniejszej rozmowy o partnerstwach growth.",
+    organization: "Example Ventures",
+    stage: "Ciepła relacja",
+    priority: "średni",
+    confidence: 82,
+    next: "Wysłać forward-proof mail o mapowaniu partnerstw dla spółek portfelowych.",
+    publicFacts: ["prowadzi partnerstwa funduszu", "komunikuje się językiem growth i ekosystemu"],
+    userContext: ["krótka rozmowa po panelu growth", "lubi konkretny przykład przed spotkaniem"],
   },
   {
     initials: "MN",
     name: "Marek Nowak",
     role: "Founder",
-    company: "SaaS Forge",
-    stage: "Researching",
-    score: 64,
-    needs: ["positioning", "demand generation"],
-    angle: "Krótki outreach z propozycją konkretnego audytu systemów.",
-  },
-  {
-    initials: "JL",
-    name: "Julia Lewandowska",
-    role: "Deputy Mayor, Digital Affairs",
-    company: "City Office",
-    stage: "Contacted",
-    score: 76,
-    needs: ["citizen service automation", "public consultation workflows"],
-    angle: "Bezpieczny, forward-proof mail o usprawnieniu obsługi mieszkańców.",
+    organization: "SaaS Forge",
+    stage: "Research",
+    priority: "średni",
+    confidence: 68,
+    next: "Dokończyć brief i przygotować audyt positioning + demand generation.",
+    publicFacts: ["buduje narzędzie B2B", "aktywnie publikuje o sprzedaży founderskiej"],
+    userContext: ["brak relacji bezpośredniej", "najbezpieczniej zacząć od krótkiego audytu"],
   },
 ];
 
 const stages = [
-  "New",
-  "Researching",
-  "Warm",
-  "Contacted",
-  "Replied",
-  "In Conversation",
-  "Proposal Sent",
-  "Waiting",
-  "Won",
-  "Lost",
-  "Dormant",
+  ["Nowe", 4],
+  ["Research", 7],
+  ["Ciepła relacja", 9],
+  ["Po kontakcie", 6],
+  ["Odpisał/a", 2],
+  ["Rozmowa", 3],
+  ["Oferta wysłana", 2],
+  ["Czekamy", 5],
 ];
 
-const crmDeals = [
-  { stage: "New", name: "Piotr Zielinski", detail: "Public affairs, verify sources" },
-  { stage: "Researching", name: "Marek Nowak", detail: "Founder offer angle" },
-  { stage: "Warm", name: "Anna Kowalska", detail: "Partnership intro ready" },
-  { stage: "Contacted", name: "Julia Lewandowska", detail: "Email delivered, waiting" },
-  { stage: "Replied", name: "Tomasz Urban", detail: "Asked for examples" },
-  { stage: "Proposal Sent", name: "Katarzyna Bien", detail: "System pilot deck" },
+const crmCards = [
+  { stage: "Research", name: "Marek Nowak", meta: "Founder SaaS, brak relacji", action: "brief do dokończenia" },
+  { stage: "Ciepła relacja", name: "Anna Kowalska", meta: "Example Ventures", action: "mail short do akceptacji" },
+  { stage: "Po kontakcie", name: "Julia Lewandowska", meta: "Urząd miasta, cyfryzacja", action: "follow-up po otwarciu" },
+  { stage: "Odpisał/a", name: "Tomasz Urban", meta: "Public affairs", action: "odpisać dziś do 16:00" },
+  { stage: "Oferta wysłana", name: "Katarzyna Bień", meta: "Instytucja kultury", action: "czekać 3 dni" },
 ];
 
 const alerts = [
   {
-    type: "critical",
-    title: "Reply detected from Tomasz Urban",
-    body: "Resend webhook mapped email.replied, moved CRM stage to Replied and created a next action.",
-    time: "2 min",
+    tone: "critical",
+    title: "Tomasz Urban odpisał na wiadomość",
+    body: "Webhook Resend oznaczył email.replied, CRM przesunięty na Odpisał/a, utworzono zadanie odpowiedzi.",
+    time: "2 min temu",
   },
   {
-    type: "warn",
-    title: "Bounce on city-office alias",
-    body: "Delivery failed. Relora marked the message as bounced and raised a critical outreach alert.",
-    time: "18 min",
+    tone: "warning",
+    title: "Bounce na alias urzędu miasta",
+    body: "Dostarczenie nie powiodło się. Relora podniosła alert i zablokowała follow-up do korekty adresu.",
+    time: "18 min temu",
   },
   {
-    type: "ok",
-    title: "Anna opened the partnership message",
-    body: "Warmth score increased. Suggested follow-up waits for manual approval.",
-    time: "41 min",
+    tone: "ok",
+    title: "Anna otworzyła mail partnerstwowy",
+    body: "Warmth score +1. Follow-up jest gotowy, ale czeka na ręczną akceptację podglądu.",
+    time: "41 min temu",
   },
 ];
 
 function Badge({
   children,
-  tone,
+  tone = "neutral",
 }: {
   children: React.ReactNode;
-  tone?: "teal" | "wine" | "gold";
+  tone?: "neutral" | "teal" | "gold" | "wine" | "green";
 }) {
-  return <span className={`badge ${tone ?? ""}`}>{children}</span>;
+  return <span className={`v2-badge ${tone}`}>{children}</span>;
 }
 
-function SectionHead({
+function Section({
+  id,
   eyebrow,
   title,
-  copy,
+  children,
 }: {
+  id: string;
   eyebrow: string;
   title: string;
-  copy: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="section-head">
-      <div>
-        <span className="eyebrow">{eyebrow}</span>
+    <section className="v2-section" id={id}>
+      <div className="v2-section-title">
+        <span>{eyebrow}</span>
         <h2>{title}</h2>
-        <p>{copy}</p>
       </div>
-    </div>
+      {children}
+    </section>
   );
 }
 
 export default function Page() {
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="mark">R</div>
+    <div className="v2-app">
+      <aside className="v2-sidebar">
+        <div className="v2-brand">
+          <div className="v2-mark">R</div>
           <div>
             <strong>Relora</strong>
-            <span>Relationship intelligence</span>
+            <span>people intelligence CRM</span>
           </div>
         </div>
-        <nav className="nav" aria-label="Primary navigation">
-          <a className="active" href="#dashboard">
-            Dashboard <kbd>D</kbd>
-          </a>
-          <a href="#people">People List</a>
-          <a href="#person">Person Detail</a>
-          <a href="#brief">Research Brief</a>
-          <a href="#crm">CRM Board</a>
-          <a href="#graph">Relationship Graph</a>
-          <a href="#composer">Message Composer</a>
-          <a href="#alerts">Alerts Center</a>
+        <nav className="v2-nav" aria-label="Nawigacja Relora">
+          <a href="#kokpit" className="active">Kokpit</a>
+          <a href="#osoby">Osoby</a>
+          <a href="#karta">Karta osoby</a>
+          <a href="#brief">Research brief</a>
+          <a href="#crm">CRM</a>
+          <a href="#graf">Graf relacji</a>
+          <a href="#wiadomosc">Composer</a>
+          <a href="#alerty">Alerty</a>
         </nav>
-        <div className="sidebar-footer">
-          <span>Realtime layer</span>
-          <strong>Supabase tables watched: notes, interactions, crm_records, messages, message_events, alerts</strong>
+        <div className="v2-sidebar-card">
+          <span>Tryb danych</span>
+          <strong>Public facts oddzielone od user context</strong>
+          <p>Każdy insight ma source albo etykietę user_provided.</p>
         </div>
       </aside>
 
-      <main className="main">
-        <header className="topbar">
-          <label className="search">
+      <main className="v2-main">
+        <header className="v2-topbar">
+          <div>
+            <span className="v2-kicker">Workspace: Relacje strategiczne</span>
+            <h1>Kokpit relacji, researchu i wiadomości</h1>
+          </div>
+          <label className="v2-search">
             <span>⌕</span>
-            <input placeholder="Search people, public facts, private context, messages..." />
+            <input placeholder="Szukaj osoby, instytucji, notatki, źródła albo wiadomości" />
             <kbd>⌘K</kbd>
           </label>
-          <button className="btn ghost">◐ Theme</button>
-          <button className="btn primary">＋ Add context</button>
+          <button className="v2-button primary">Dodaj kontekst</button>
         </header>
 
-        <div className="content">
-          <section className="hero" id="dashboard">
-            <div className="hero-main">
-              <span className="eyebrow">Premium B2B SaaS cockpit</span>
-              <h1>Know the person before you write the message.</h1>
-              <p>
-                Relora combines public research, private relationship context, CRM stages,
-                timelines, playbooks and Resend delivery tracking in one calm workspace.
-              </p>
-              <div className="hero-actions">
-                <button className="btn primary">Open next best action</button>
-                <button className="btn">Review email previews</button>
-                <button className="btn">Map relationships</button>
+        <div className="v2-content">
+          <section className="v2-command" id="kokpit">
+            <div className="v2-command-main">
+              <div className="v2-command-head">
+                <div>
+                  <span className="v2-kicker">Najważniejsza decyzja dziś</span>
+                  <h2>Julia Lewandowska: wysłać bezpieczny follow-up o usługach mieszkańca?</h2>
+                </div>
+                <Badge tone="gold">wymaga akceptacji</Badge>
               </div>
-            </div>
-            <div className="architecture">
-              <span className="eyebrow">Screen architecture</span>
-              <h2>Core flow</h2>
-              <div className="flow-list">
-                <div className="flow-item">
-                  <b>1</b>
-                  <div>
-                    <strong>Add person and sources</strong>
-                    <span>Public URLs, notes, organizations and relationship edges are captured separately.</span>
-                  </div>
+              <div className="v2-decision-grid">
+                <div>
+                  <span>Najlepszy angle</span>
+                  <strong>Nie „sprzedajemy AI”, tylko pokazujemy system skracający obsługę spraw mieszkańców.</strong>
                 </div>
-                <div className="flow-item">
-                  <b>2</b>
-                  <div>
-                    <strong>Build research brief</strong>
-                    <span>Facts, confidence, sources, possible needs, risk notes and suggested systems.</span>
-                  </div>
+                <div>
+                  <span>Ryzyko</span>
+                  <strong>Średnie. Wiadomość może zostać przesłana dalej, więc bez prywatnych sugestii i aluzji politycznych.</strong>
                 </div>
-                <div className="flow-item">
-                  <b>3</b>
-                  <div>
-                    <strong>Move through CRM</strong>
-                    <span>Every status change becomes timeline activity and can trigger alerts.</span>
-                  </div>
-                </div>
-                <div className="flow-item">
-                  <b>4</b>
-                  <div>
-                    <strong>Preview then approve</strong>
-                    <span>No outbound message is sent through Resend without manual approval.</span>
-                  </div>
+                <div>
+                  <span>Następny krok</span>
+                  <strong>Zatwierdzić podgląd maila short form albo odłożyć na alert po konferencji.</strong>
                 </div>
               </div>
             </div>
+            <aside className="v2-live-panel">
+              <span className="v2-kicker">Realtime Supabase</span>
+              <div className="v2-live-row"><b>notes</b><span>3 nowe</span></div>
+              <div className="v2-live-row"><b>messages</b><span>14 draftów</span></div>
+              <div className="v2-live-row"><b>alerts</b><span>3 pilne</span></div>
+              <div className="v2-live-row"><b>crm_records</b><span>2 zmiany</span></div>
+            </aside>
           </section>
 
-          <section>
-            <div className="grid-4">
-              <div className="metric">
-                <span>Tracked people</span>
-                <strong>248</strong>
-                <small>32 with complete briefs</small>
-              </div>
-              <div className="metric">
-                <span>Manual approvals waiting</span>
-                <strong>14</strong>
-                <small>All have previews</small>
-              </div>
-              <div className="metric">
-                <span>Warmth increase</span>
-                <strong>+18%</strong>
-                <small>From opens, clicks, replies</small>
-              </div>
-              <div className="metric">
-                <span>Critical alerts</span>
-                <strong>3</strong>
-                <small>Bounces and replies</small>
-              </div>
-            </div>
-          </section>
+          <div className="v2-metrics">
+            <div><span>Osoby w bazie</span><strong>248</strong><small>39 z pełnym briefem</small></div>
+            <div><span>Wiadomości do akceptacji</span><strong>14</strong><small>0 wysyłek automatycznych</small></div>
+            <div><span>Relacje ciepłe</span><strong>62</strong><small>z historią kontaktu</small></div>
+            <div><span>Alerty krytyczne</span><strong>3</strong><small>reply, bounce, deadline</small></div>
+          </div>
 
-          <section id="people">
-            <SectionHead
-              eyebrow="People list"
-              title="Research-ready people database"
-              copy="Each person shows CRM status, confidence, needs and the safest opening angle before you enter the detail view."
-            />
-            <div className="people-grid">
+          <Section id="osoby" eyebrow="People list" title="Lista osób z kontekstem, nie zwykła książka adresowa">
+            <div className="v2-people">
               {people.map((person) => (
-                <article className="person-card" key={person.name}>
-                  <div className="person-top">
-                    <div className="avatar">{person.initials}</div>
+                <article className="v2-person" key={person.name}>
+                  <div className="v2-person-head">
+                    <div className="v2-avatar">{person.initials}</div>
                     <div>
-                      <strong>{person.name}</strong>
-                      <span>
-                        {person.role}, {person.company}
-                      </span>
+                      <h3>{person.name}</h3>
+                      <p>{person.role} · {person.organization}</p>
                     </div>
-                    <Badge tone="teal">{person.score}%</Badge>
+                    <Badge tone={person.priority === "wysoki" ? "wine" : "gold"}>{person.priority}</Badge>
                   </div>
-                  <div className="badge-row">
-                    <Badge tone="gold">{person.stage}</Badge>
-                    {person.needs.map((need) => (
-                      <Badge key={need}>{need}</Badge>
-                    ))}
+                  <div className="v2-person-meta">
+                    <Badge tone="teal">{person.stage}</Badge>
+                    <Badge>{person.confidence}% confidence</Badge>
                   </div>
-                  <p>{person.angle}</p>
-                  <div className="status-row">
-                    <button className="btn">Brief</button>
-                    <button className="btn">Timeline</button>
-                    <button className="btn primary">Compose</button>
+                  <p className="v2-next">{person.next}</p>
+                  <div className="v2-split-mini">
+                    <div>
+                      <b>Public facts</b>
+                      {person.publicFacts.map((item) => <span key={item}>{item}</span>)}
+                    </div>
+                    <div>
+                      <b>User context</b>
+                      {person.userContext.map((item) => <span key={item}>{item}</span>)}
+                    </div>
                   </div>
                 </article>
               ))}
             </div>
-          </section>
+          </Section>
 
-          <section id="person">
-            <SectionHead
-              eyebrow="Person detail"
-              title="The person card is the central artifact"
-              copy="Public facts and user context are never blended. Every insight is either sourced or explicitly marked as user provided."
-            />
-            <div className="detail-layout">
-              <div className="identity">
-                <div className="identity-head">
-                  <div className="avatar">AK</div>
+          <Section id="karta" eyebrow="Person detail" title="Karta osoby jako centralny artefakt">
+            <div className="v2-detail-grid">
+              <article className="v2-profile">
+                <div className="v2-profile-head">
+                  <div className="v2-avatar large">JL</div>
                   <div>
-                    <h2>Anna Kowalska</h2>
-                    <p>Head of Partnerships at Example Ventures. Met once after a growth panel.</p>
-                    <div className="badge-row">
-                      <Badge tone="teal">Warmth 82</Badge>
-                      <Badge tone="gold">CRM: Warm</Badge>
-                      <Badge>Owner: Wojciech</Badge>
+                    <span className="v2-kicker">aktywny rekord</span>
+                    <h2>Julia Lewandowska</h2>
+                    <p>Zastępczyni prezydenta ds. cyfryzacji, Urząd Miasta Wrocławia</p>
+                    <div className="v2-person-meta">
+                      <Badge tone="teal">Po kontakcie</Badge>
+                      <Badge tone="gold">forward-proof</Badge>
+                      <Badge>source coverage 86%</Badge>
                     </div>
                   </div>
-                  <button className="btn primary">＋ Note</button>
                 </div>
-
-                <div className="fact-context">
-                  <div className="data-box">
+                <div className="v2-two-columns">
+                  <div className="v2-factbox">
                     <h3>Public facts</h3>
                     <ul>
-                      <li>Role: partnerships and venture network development. Source: company profile.</li>
-                      <li>Speaks publicly about growth partnerships and ecosystem building. Source: event page.</li>
-                      <li>Connected to Example Ventures and SaaS founders. Confidence: 0.84.</li>
+                      <li>Publiczna odpowiedzialność: cyfrowe usługi mieszkańca i modernizacja procesów.</li>
+                      <li>Źródło: strona urzędu, agenda panelu GovTech, wzmianki konferencyjne.</li>
+                      <li>Potencjalna potrzeba: uporządkowanie spraw, konsultacji i komunikacji z mieszkańcami.</li>
                     </ul>
                   </div>
-                  <div className="data-box">
+                  <div className="v2-factbox private">
                     <h3>User context</h3>
                     <ul>
-                      <li>User provided: quick conversation after the Warsaw growth panel.</li>
-                      <li>Prefers concise follow-up with a concrete partnership hypothesis.</li>
-                      <li>Sensitivity: medium. Keep the message forward-proof.</li>
+                      <li>user_provided: krótka rozmowa po konferencji, pozytywna reakcja na konkretne przykłady.</li>
+                      <li>Notatka prywatna: unikać politycznego tonu i obietnic „automatyzacji wszystkiego”.</li>
+                      <li>Preferowany CTA: pokazanie jednego procesu, nie pełna prezentacja sprzedażowa.</li>
                     </ul>
                   </div>
                 </div>
-              </div>
-
-              <aside className="panel">
-                <h3>Activity timeline</h3>
-                <ul className="timeline">
-                  <li>
-                    <time>Today</time>
-                    <div>
-                      <strong>Suggested message generated</strong>
-                      <p>Short email variant waits for preview approval.</p>
-                    </div>
-                  </li>
-                  <li>
-                    <time>Apr 22</time>
-                    <div>
-                      <strong>Research brief refreshed</strong>
-                      <p>New source added, confidence increased to 82%.</p>
-                    </div>
-                  </li>
-                  <li>
-                    <time>Apr 18</time>
-                    <div>
-                      <strong>CRM moved to Warm</strong>
-                      <p>Status change recorded in crm_records and interactions.</p>
-                    </div>
-                  </li>
-                </ul>
+              </article>
+              <aside className="v2-timeline">
+                <h3>Timeline</h3>
+                <div><time>Dziś 12:40</time><strong>Wygenerowano wariant email short</strong><p>Czeka na preview i ręczną akceptację.</p></div>
+                <div><time>Wczoraj</time><strong>Dodano źródło publiczne</strong><p>Agenda konferencji GovTech zwiększyła confidence.</p></div>
+                <div><time>18 kwi</time><strong>Interakcja po panelu</strong><p>Notatka użytkownika oznaczona jako user_provided.</p></div>
               </aside>
             </div>
-          </section>
+          </Section>
 
-          <section id="brief">
-            <SectionHead
-              eyebrow="Research brief"
-              title="Public role, needs, angle and what to avoid"
-              copy="The brief turns research into a practical outreach decision: what system to propose, which channel to use and which risks to respect."
-            />
-            <div className="brief-grid">
-              <div className="brief-panel">
-                <h3>Who she is today</h3>
-                <p>Partnership leader working around venture-backed SaaS companies and growth collaborations.</p>
-              </div>
-              <div className="brief-panel">
-                <h3>Communication style</h3>
-                <p>Publicly concise, opportunity-driven, comfortable with ecosystem and founder language.</p>
-              </div>
-              <div className="brief-panel">
-                <h3>Possible needs</h3>
-                <p>Warm lead sourcing, partner mapping, portfolio founder follow-up and signal-based outreach.</p>
-              </div>
-              <div className="brief-panel wide">
-                <h3>Suggested systems to pitch</h3>
-                <p>
-                  A lightweight relationship intelligence system that maps founders, partners and previous
-                  conversations, then drafts safe follow-ups with approval and delivery tracking.
-                </p>
-              </div>
-              <div className="brief-panel">
-                <h3>Avoid</h3>
-                <p>Overclaiming automation, implying private knowledge from public data, or sending an unsourced insight.</p>
-              </div>
+          <Section id="brief" eyebrow="Research brief" title="Brief badawczy, który prowadzi do decyzji">
+            <div className="v2-brief-grid">
+              <div><span>Kim jest dziś</span><p>Osoba odpowiedzialna za cyfrowe procesy publiczne i jakość obsługi mieszkańców.</p></div>
+              <div><span>Jak mówi publicznie</span><p>Język: sprawność urzędu, dostępność usług, mierzalne usprawnienia, bezpieczeństwo.</p></div>
+              <div><span>Możliwa potrzeba</span><p>System do mapowania spraw, interesariuszy, statusów i follow-upów między wydziałami.</p></div>
+              <div><span>Najlepszy angle</span><p>Pokazać mały pilotaż: jedna kategoria spraw, jeden dashboard, jasny raport efektów.</p></div>
+              <div><span>Czego unikać</span><p>Brzmienia jak masowy cold mail, obietnic AI, prywatnych sugestii i tonu politycznego.</p></div>
+              <div><span>Kanał pierwszy</span><p>Email short form, potem follow-up po otwarciu lub kliknięciu, wszystko przez preview.</p></div>
             </div>
-          </section>
+          </Section>
 
-          <section id="crm">
-            <SectionHead
-              eyebrow="CRM board"
-              title="Pipeline with relationship-aware status"
-              copy="Stages match the Supabase crm_records model and every move should create a timeline entry."
-            />
-            <div className="crm-board">
-              {stages.map((stage) => (
-                <div className="crm-column" key={stage}>
-                  <h3>{stage}</h3>
-                  {crmDeals
-                    .filter((deal) => deal.stage === stage)
-                    .map((deal) => (
-                      <div className="deal" key={deal.name}>
-                        <strong>{deal.name}</strong>
-                        <span>{deal.detail}</span>
-                      </div>
-                    ))}
+          <Section id="crm" eyebrow="CRM board" title="Pipeline relacji z następnym krokiem">
+            <div className="v2-crm">
+              {stages.map(([stage, count]) => (
+                <div className="v2-stage" key={stage}>
+                  <header><strong>{stage}</strong><span>{count}</span></header>
+                  {crmCards.filter((card) => card.stage === stage).map((card) => (
+                    <article key={card.name}>
+                      <b>{card.name}</b>
+                      <p>{card.meta}</p>
+                      <small>{card.action}</small>
+                    </article>
+                  ))}
                 </div>
               ))}
             </div>
-          </section>
+          </Section>
 
-          <section id="graph">
-            <SectionHead
-              eyebrow="Relationship graph"
-              title="People, organizations, topics, messages and interactions"
-              copy="The graph makes the relationship model visible without hiding source confidence or context type."
-            />
-            <div className="graph-wrap" aria-label="Relationship graph preview">
-              <div className="graph-line" style={{ left: 280, top: 210, width: 210, transform: "rotate(-16deg)" }} />
-              <div className="graph-line" style={{ left: 470, top: 232, width: 220, transform: "rotate(18deg)" }} />
-              <div className="graph-line" style={{ left: 380, top: 275, width: 260, transform: "rotate(55deg)" }} />
-              <div className="graph-line" style={{ left: 250, top: 300, width: 230, transform: "rotate(25deg)" }} />
-              <div className="node person" style={{ left: "9%", top: "35%" }}>
-                Anna Kowalska
-                <br />
-                <span className="muted">person</span>
-              </div>
-              <div className="node" style={{ left: "36%", top: "25%" }}>
-                Example Ventures
-                <br />
-                <span className="muted">organization</span>
-              </div>
-              <div className="node topic" style={{ left: "66%", top: "37%" }}>
-                Growth partnerships
-                <br />
-                <span className="muted">topic</span>
-              </div>
-              <div className="node" style={{ left: "46%", top: "66%" }}>
-                Email draft 03
-                <br />
-                <span className="muted">message</span>
-              </div>
-              <div className="node person" style={{ left: "18%", top: "68%" }}>
-                Marek Nowak
-                <br />
-                <span className="muted">related person</span>
-              </div>
+          <Section id="graf" eyebrow="Relationship graph" title="Mapa powiązań osób, instytucji i tematów">
+            <div className="v2-graph">
+              <div className="v2-edge e1" />
+              <div className="v2-edge e2" />
+              <div className="v2-edge e3" />
+              <div className="v2-node n1"><b>Julia Lewandowska</b><span>person</span></div>
+              <div className="v2-node n2"><b>Urząd miasta</b><span>institution</span></div>
+              <div className="v2-node n3"><b>Usługi mieszkańca</b><span>topic</span></div>
+              <div className="v2-node n4"><b>Email short 04</b><span>message</span></div>
+              <div className="v2-node n5"><b>Konferencja GovTech</b><span>interaction</span></div>
             </div>
-          </section>
+          </Section>
 
-          <section id="composer">
-            <SectionHead
-              eyebrow="Message composer"
-              title="Variants, preview and manual approval before Resend"
-              copy="Relora can draft long email, short email, Messenger, LinkedIn DM, SMS and follow-ups, but sending is blocked until the preview is approved."
-            />
-            <div className="composer-grid">
-              <div className="composer-panel">
-                <h3>Playbook variants</h3>
-                <div className="tags" style={{ marginTop: 14 }}>
-                  <Badge tone="teal">email short</Badge>
-                  <Badge>email long</Badge>
-                  <Badge>linkedin DM</Badge>
-                  <Badge>messenger</Badge>
-                  <Badge>SMS</Badge>
-                  <Badge>follow-up 1</Badge>
-                  <Badge>follow-up 2</Badge>
+          <Section id="wiadomosc" eyebrow="Message composer" title="Wiadomość nie wychodzi bez podglądu">
+            <div className="v2-composer">
+              <aside>
+                <h3>Playbook</h3>
+                <Badge tone="teal">email short</Badge>
+                <Badge>email long</Badge>
+                <Badge>LinkedIn DM</Badge>
+                <Badge>SMS</Badge>
+                <Badge>follow-up 1</Badge>
+                <div className="v2-policy">
+                  <strong>Reguła wysyłki</strong>
+                  <p>draft / preview / approved / Resend. Brak automatycznej wysyłki.</p>
                 </div>
-                <div className="approval">
-                  <strong>Send policy</strong>
-                  <p>No automatic sends. Approval status must move from draft to approved.</p>
-                </div>
+              </aside>
+              <div className="v2-draft">
+                <label>Temat<input defaultValue="Krótki pilotaż dla cyfrowej obsługi mieszkańców" /></label>
+                <label>Treść<textarea defaultValue={`Pani Julio,\n\npo panelu GovTech zostałem z jedną myślą: w cyfryzacji urzędu najwięcej wartości daje nie kolejny formularz, tylko jasny system obsługi spraw i follow-upów między zespołami.\n\nPrzygotowałem krótki przykład pilotażu dla jednej kategorii spraw mieszkańców: statusy, osoby odpowiedzialne, historia kontaktu i alerty, bez ryzyka automatycznej komunikacji bez akceptacji.\n\nJeżeli to użyteczne, mogę podesłać 2-minutowy podgląd albo pokazać konkretny workflow.`} /></label>
               </div>
-              <div className="composer-panel">
-                <h3>Draft</h3>
-                <div className="field">
-                  <label>Recipient</label>
-                  <select defaultValue="Anna Kowalska">
-                    <option>Anna Kowalska</option>
-                    <option>Marek Nowak</option>
-                    <option>Julia Lewandowska</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Subject</label>
-                  <input defaultValue="Partnership map for portfolio growth conversations" />
-                </div>
-                <div className="field">
-                  <label>Message body</label>
-                  <textarea defaultValue={`Hi Anna,\n\nI kept thinking about your point from the growth panel: the best partnerships usually start from the right context, not from a cold list.\n\nI am building Relora, a relationship intelligence system that separates public facts from private context, maps people and organizations, and drafts follow-ups that still need human approval before sending.\n\nIf useful, I can show you a concrete portfolio partnership workflow in 15 minutes.`} />
-                </div>
-              </div>
-              <div className="composer-panel">
-                <h3>Email preview</h3>
-                <div className="preview">
-                  <span className="eyebrow">Preview before Resend</span>
-                  <h4>Partnership map for portfolio growth conversations</h4>
-                  <p>Hi Anna,</p>
-                  <p>
-                    I kept thinking about your point from the growth panel: the best partnerships usually start from
-                    the right context, not from a cold list.
-                  </p>
-                  <p>
-                    I am building Relora, a relationship intelligence system that separates public facts from private
-                    context, maps people and organizations, and drafts follow-ups that still need human approval before
-                    sending.
-                  </p>
-                  <p>If useful, I can show you a concrete portfolio partnership workflow in 15 minutes.</p>
-                </div>
-                <div className="status-row" style={{ marginTop: 12 }}>
-                  <button className="btn">Save draft</button>
-                  <button className="btn">Approve preview</button>
-                  <button className="btn primary">Send via Resend</button>
+              <div className="v2-preview">
+                <span className="v2-kicker">Preview przed Resend</span>
+                <h3>Krótki pilotaż dla cyfrowej obsługi mieszkańców</h3>
+                <p>Pani Julio,</p>
+                <p>po panelu GovTech zostałem z jedną myślą: w cyfryzacji urzędu najwięcej wartości daje nie kolejny formularz, tylko jasny system obsługi spraw i follow-upów między zespołami.</p>
+                <p>Przygotowałem krótki przykład pilotażu dla jednej kategorii spraw mieszkańców: statusy, osoby odpowiedzialne, historia kontaktu i alerty, bez ryzyka automatycznej komunikacji bez akceptacji.</p>
+                <div className="v2-approval">
+                  <Badge tone="gold">approval_status: draft</Badge>
+                  <button className="v2-button">Zapisz</button>
+                  <button className="v2-button primary">Zatwierdź podgląd</button>
                 </div>
               </div>
             </div>
-          </section>
+          </Section>
 
-          <section id="alerts">
-            <SectionHead
-              eyebrow="Alerts center"
-              title="Realtime monitoring for replies, bounces and CRM changes"
-              copy="Resend webhook events create message_events, update message timestamps and raise alerts for important outcomes."
-            />
-            <div className="split">
-              <div className="alerts">
-                {alerts.map((alert) => (
-                  <article className="alert-row" key={alert.title}>
-                    <span className={`dot ${alert.type === "critical" ? "critical" : alert.type === "warn" ? "warn" : ""}`} />
-                    <div>
-                      <strong>{alert.title}</strong>
-                      <p>{alert.body}</p>
-                    </div>
-                    <Badge>{alert.time}</Badge>
-                  </article>
-                ))}
-              </div>
-              <div className="dark-band">
-                <span className="eyebrow">Backend contract</span>
-                <h3>Supabase + Resend</h3>
-                <p>
-                  POST /api/webhooks/resend verifies signature, maps resend_message_id, inserts message_events, updates
-                  sent, delivered, opened, clicked, replied, bounced and failed states, then creates alerts.
-                </p>
-                <div className="badge-row" style={{ marginTop: 14 }}>
-                  <Badge>messages</Badge>
-                  <Badge>message_events</Badge>
-                  <Badge>alerts</Badge>
-                  <Badge>crm_records</Badge>
-                </div>
-              </div>
+          <Section id="alerty" eyebrow="Alerts center" title="Alerty z Resend i Supabase Realtime">
+            <div className="v2-alerts">
+              {alerts.map((alert) => (
+                <article className={`v2-alert ${alert.tone}`} key={alert.title}>
+                  <span />
+                  <div><strong>{alert.title}</strong><p>{alert.body}</p></div>
+                  <time>{alert.time}</time>
+                </article>
+              ))}
             </div>
-          </section>
+          </Section>
         </div>
       </main>
     </div>

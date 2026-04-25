@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Relora",
-  description: "People intelligence, personal CRM and outreach cockpit.",
+  description: "Kokpit relacji, researchu, CRM i outreachu z podglądem wiadomości.",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pl">
       <body>{children}</body>
     </html>
   );
