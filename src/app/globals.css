@@ -2324,3 +2324,453 @@ section {
     grid-template-columns: 1fr;
   }
 }
+
+/* Relora design system v4 */
+:root {
+  --relora-canvas: #eef0ee;
+  --relora-canvas-2: #e6e8e5;
+  --relora-surface: rgba(255, 255, 252, 0.94);
+  --relora-surface-solid: #fffffc;
+  --relora-ink: #12161d;
+  --relora-soft-ink: #3d4652;
+  --relora-muted: #6e7681;
+  --relora-hairline: rgba(20, 27, 36, 0.12);
+  --relora-hairline-strong: rgba(20, 27, 36, 0.18);
+  --relora-navy: #111827;
+  --relora-navy-2: #182235;
+  --relora-teal: #00766f;
+  --relora-teal-soft: rgba(0, 118, 111, 0.1);
+  --relora-amber: #a56b00;
+  --relora-amber-soft: rgba(165, 107, 0, 0.1);
+  --relora-red: #9d244a;
+  --relora-green: #25724d;
+  --relora-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05), 0 8px 24px rgba(17, 24, 39, 0.06);
+  --relora-shadow-md: 0 1px 2px rgba(17, 24, 39, 0.06), 0 18px 50px rgba(17, 24, 39, 0.09);
+}
+
+body {
+  background:
+    linear-gradient(180deg, rgba(238, 240, 238, 0.98), rgba(230, 232, 229, 0.98)),
+    var(--relora-canvas);
+  color: var(--relora-ink);
+}
+
+.r-shell {
+  --r-bg: var(--relora-canvas);
+  --r-panel: var(--relora-surface);
+  --r-ink: var(--relora-ink);
+  --r-muted: var(--relora-muted);
+  --r-line: var(--relora-hairline);
+  --r-dark: var(--relora-navy);
+  --r-teal: var(--relora-teal);
+  --r-gold: var(--relora-amber);
+  --r-wine: var(--relora-red);
+  grid-template-columns: 264px minmax(0, 1fr);
+  background:
+    linear-gradient(135deg, rgba(17, 24, 39, 0.03), transparent 36%),
+    linear-gradient(180deg, var(--relora-canvas), var(--relora-canvas-2));
+}
+
+.r-rail {
+  margin: 12px 0 12px 12px;
+  height: calc(100vh - 24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, #141c2b, #0d121c 72%),
+    var(--relora-navy);
+  box-shadow: var(--relora-shadow-md);
+}
+
+.r-brand {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.r-logo {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, #009084, #304766);
+  box-shadow: 0 10px 30px rgba(0, 118, 111, 0.24);
+}
+
+.r-brand strong {
+  font-size: 19px;
+  letter-spacing: 0;
+}
+
+.r-brand span {
+  margin-top: 2px;
+  color: rgba(248, 242, 232, 0.62);
+}
+
+.r-rail nav {
+  gap: 6px;
+}
+
+.r-rail a {
+  min-height: 42px;
+  padding: 0 12px;
+  color: rgba(248, 242, 232, 0.68);
+  border: 1px solid transparent;
+  font-size: 14px;
+}
+
+.r-rail a:first-child,
+.r-rail a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.r-workspace {
+  padding: 18px;
+  gap: 18px;
+}
+
+.r-header,
+.r-panel,
+.r-metrics > div {
+  border: 1px solid var(--relora-hairline);
+  border-radius: 14px;
+  background: var(--relora-surface);
+  box-shadow: var(--relora-shadow-sm);
+  backdrop-filter: blur(18px);
+}
+
+.r-header {
+  align-items: stretch;
+  padding: 22px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 252, 0.98), rgba(247, 248, 244, 0.92)),
+    var(--relora-surface-solid);
+}
+
+.r-header h1 {
+  max-width: 900px;
+  color: var(--relora-ink);
+  font-size: clamp(34px, 4.8vw, 64px);
+  line-height: 0.96;
+}
+
+.r-header p {
+  max-width: 760px;
+  color: var(--relora-soft-ink);
+  font-size: 15px;
+}
+
+.r-eyebrow,
+.r-panel > span,
+.r-box span,
+.r-brief span,
+.r-preview span,
+.r-metrics span,
+.r-engine-chip span,
+.r-engine-output span {
+  color: var(--relora-muted);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.r-engine-chip {
+  border: 1px solid var(--relora-hairline);
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, 0.96), rgba(24, 34, 53, 0.96)),
+    var(--relora-navy);
+  color: white;
+  box-shadow: var(--relora-shadow-sm);
+}
+
+.r-engine-chip span {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.r-engine-chip strong {
+  color: white;
+}
+
+.r-engine-chip button,
+.r-preview button.primary {
+  border: 0;
+  background: var(--relora-teal);
+  color: white;
+  box-shadow: 0 10px 24px rgba(0, 118, 111, 0.22);
+}
+
+.r-engine-chip button:hover,
+.r-preview button.primary:hover {
+  background: #006760;
+}
+
+.r-metrics {
+  gap: 14px;
+}
+
+.r-metrics > div {
+  position: relative;
+  overflow: hidden;
+  min-height: 112px;
+  padding: 16px;
+}
+
+.r-metrics > div::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--relora-teal), rgba(165, 107, 0, 0.8));
+}
+
+.r-metrics strong {
+  color: var(--relora-ink);
+  font-size: 34px;
+}
+
+.r-metrics small {
+  color: var(--relora-muted);
+}
+
+.r-grid,
+.engine-grid {
+  gap: 18px;
+}
+
+.r-panel {
+  padding: 18px;
+}
+
+.r-panel h2 {
+  margin-bottom: 16px;
+  color: var(--relora-ink);
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.r-person-card,
+.r-task,
+.r-box,
+.r-brief > div,
+.r-stage,
+.r-graph-group,
+.r-draft,
+.r-preview,
+.r-empty,
+.r-engine-output > div {
+  border: 1px solid var(--relora-hairline);
+  border-radius: 12px;
+  background: var(--relora-surface-solid);
+  box-shadow: none;
+}
+
+.r-person-card.as-button {
+  padding: 14px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.r-person-card.as-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 118, 111, 0.38);
+  box-shadow: var(--relora-shadow-sm);
+}
+
+.r-person-card.selected {
+  border-color: rgba(0, 118, 111, 0.78);
+  background:
+    linear-gradient(180deg, rgba(0, 118, 111, 0.075), rgba(255, 255, 252, 0.98)),
+    var(--relora-surface-solid);
+  box-shadow: 0 0 0 3px rgba(0, 118, 111, 0.1);
+}
+
+.r-avatar {
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  background: linear-gradient(135deg, #121827, #00766f);
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.12);
+}
+
+.r-card-head h3,
+.r-identity h2 {
+  color: var(--relora-ink);
+  font-weight: 700;
+}
+
+.r-card-head p,
+.r-identity p,
+.r-notes,
+.r-box li,
+.r-box p,
+.r-engine-output p,
+.r-preview p,
+.r-empty p {
+  color: var(--relora-soft-ink);
+}
+
+.r-badge {
+  min-height: 26px;
+  border-color: var(--relora-hairline);
+  background: rgba(17, 24, 39, 0.045);
+  color: var(--relora-soft-ink);
+  font-weight: 700;
+}
+
+.r-badge.teal {
+  color: var(--relora-teal);
+  background: var(--relora-teal-soft);
+  border-color: rgba(0, 118, 111, 0.22);
+}
+
+.r-badge.gold {
+  color: var(--relora-amber);
+  background: var(--relora-amber-soft);
+  border-color: rgba(165, 107, 0, 0.22);
+}
+
+.r-badge.wine {
+  color: var(--relora-red);
+  background: rgba(157, 36, 74, 0.09);
+  border-color: rgba(157, 36, 74, 0.2);
+}
+
+.r-box.private {
+  background:
+    linear-gradient(180deg, rgba(0, 118, 111, 0.08), rgba(255, 255, 252, 0.98)),
+    var(--relora-surface-solid);
+}
+
+.r-engine-output {
+  gap: 14px;
+}
+
+.r-engine-output > div {
+  padding: 14px;
+}
+
+.r-engine-output > div:first-child {
+  background:
+    linear-gradient(180deg, var(--relora-navy-2), var(--relora-navy)),
+    var(--relora-navy);
+}
+
+.r-engine-output > div:first-child span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.r-engine-output > div:first-child strong {
+  color: white;
+}
+
+.r-connected-graph {
+  min-height: 560px;
+  border-color: var(--relora-hairline);
+  background:
+    linear-gradient(90deg, rgba(20, 27, 36, 0.055) 1px, transparent 1px),
+    linear-gradient(rgba(20, 27, 36, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 20% 15%, rgba(0, 118, 111, 0.08), transparent 32%),
+    #fbfbf7;
+  background-size: 44px 44px, 44px 44px, auto, auto;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.r-connected-graph line {
+  stroke: rgba(17, 24, 39, 0.16);
+}
+
+.r-connected-graph line.active {
+  stroke: var(--relora-teal);
+  stroke-width: 1.4;
+}
+
+.r-graph-node {
+  border-color: var(--relora-hairline);
+  border-radius: 12px;
+  background: rgba(255, 255, 252, 0.96);
+  box-shadow: var(--relora-shadow-sm);
+}
+
+.r-graph-node strong {
+  color: var(--relora-ink);
+}
+
+.r-graph-node.active {
+  border-color: rgba(0, 118, 111, 0.78);
+  background: white;
+  box-shadow:
+    var(--relora-shadow-md),
+    0 0 0 4px rgba(0, 118, 111, 0.11);
+}
+
+.r-draft label {
+  color: var(--relora-muted);
+  font-weight: 700;
+}
+
+.r-draft input,
+.r-draft textarea {
+  border-color: var(--relora-hairline);
+  background: #fbfbf7;
+}
+
+.r-draft input:focus,
+.r-draft textarea:focus {
+  outline: 3px solid rgba(0, 118, 111, 0.12);
+  border-color: rgba(0, 118, 111, 0.46);
+}
+
+.r-preview {
+  background:
+    linear-gradient(180deg, #ffffff, #fbfbf7),
+    var(--relora-surface-solid);
+}
+
+.r-preview button {
+  border-color: var(--relora-hairline);
+  background: #fff;
+  color: var(--relora-ink);
+}
+
+.r-empty {
+  background:
+    linear-gradient(180deg, rgba(17, 24, 39, 0.035), transparent),
+    var(--relora-surface-solid);
+}
+
+@media (max-width: 1100px) {
+  .r-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .r-rail {
+    position: static;
+    height: auto;
+    margin: 10px;
+  }
+
+  .r-workspace {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 760px) {
+  .r-header h1 {
+    font-size: 34px;
+  }
+
+  .r-connected-graph {
+    min-height: 460px;
+  }
+
+  .r-graph-node {
+    width: 104px;
+    min-height: 58px;
+    padding: 7px;
+  }
+
+  .r-graph-node strong {
+    font-size: 11px;
+  }
+}
