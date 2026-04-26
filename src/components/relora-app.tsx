@@ -9,20 +9,30 @@ import { Avatar, Badge, Panel } from "./ui";
 type EngineStatus = "idle" | "running" | "ready" | "error";
 
 const navigation = [
-  ["Dashboard", "#dashboard"],
-  ["People", "#people"],
-  ["Research", "#research"],
+  ["Pulpit", "#dashboard"],
+  ["Osoby", "#people"],
+  ["Analiza", "#research"],
   ["CRM", "#crm"],
-  ["Graph", "#graph"],
-  ["Composer", "#composer"],
-  ["Alerts", "#alerts"],
+  ["Graf", "#graph"],
+  ["Wiadomości", "#composer"],
+  ["Alerty", "#alerts"],
 ] as const;
 
 const crmColumns = [
   { id: "todo", label: "Do przygotowania", hint: "zadania z importu" },
-  { id: "draft", label: "Draft", hint: "wiadomość gotowa do preview" },
-  { id: "preview", label: "Preview", hint: "wymaga akceptacji" },
+  { id: "draft", label: "Szkic", hint: "wiadomość gotowa do podglądu" },
+  { id: "preview", label: "Podgląd", hint: "wymaga akceptacji" },
 ] as const;
+
+function crmStageLabel(stage: string) {
+  if (stage === "draft") return "szkic";
+  return stage;
+}
+
+function channelLabel(channel: string) {
+  if (channel === "email") return "e-mail";
+  return channel;
+}
 
 function statusLabel(status: EngineStatus) {
   if (status === "running") return "research pracuje";
@@ -96,7 +106,7 @@ export function ReloraApp() {
           <span className="brand-mark">R</span>
           <span>
             <strong>Relora</strong>
-            <small>relationship intelligence</small>
+            <small>inteligencja relacji</small>
           </span>
         </a>
 
@@ -110,7 +120,7 @@ export function ReloraApp() {
 
         <div className="rail-card">
           <span>Źródło prawdy</span>
-          <strong>Supabase-ready import</strong>
+          <strong>Import gotowy pod Supabase</strong>
           <p>contacts.csv, messages.csv, tasks.csv, migrations i spec webhooków Resend.</p>
         </div>
       </aside>
@@ -118,22 +128,22 @@ export function ReloraApp() {
       <div className="workspace">
         <header className="hero" id="dashboard">
           <div className="hero-copy">
-            <span className="eyebrow">Relora Intelligence OS · Supabase realtime · Resend preview gate</span>
-            <h1>Kokpit relacji, researchu i outreachu działający na realnych rekordach.</h1>
+            <span className="eyebrow">Relora Intelligence OS · Supabase realtime · bramka podglądu Resend</span>
+            <h1>Kokpit relacji, analizy i wysyłki działający na realnych rekordach.</h1>
             <p>
-              Wybierz osobę, sprawdź separację public facts i user context, zobacz graf powiązań,
+              Wybierz osobę, sprawdź separację faktów publicznych i kontekstu użytkownika, zobacz graf powiązań,
               status CRM oraz wiadomość zanim trafi do Resend.
             </p>
             <div className="hero-strip" aria-label="Architektura aplikacji">
-              <span>Research brief</span>
+              <span>Brief researchowy</span>
               <span>CRM status</span>
-              <span>Timeline</span>
-              <span>Suggested messages</span>
+              <span>Oś czasu</span>
+              <span>Sugerowane wiadomości</span>
             </div>
           </div>
 
           <div className="engine-card" aria-live="polite">
-            <span>Research engine</span>
+            <span>Silnik researchu</span>
             <strong>{statusLabel(engineStatus)}</strong>
             <p>{selected.name}</p>
             <button className="button button-primary" onClick={() => runResearch(selected)} type="button">
@@ -166,7 +176,7 @@ export function ReloraApp() {
         </section>
 
         <section className="content-grid content-grid-people" id="people">
-          <Panel title="People list" eyebrow="realne osoby z importu">
+          <Panel title="Lista osób" eyebrow="realne osoby z importu">
             <div className="people-list">
               {contacts.map((person) => (
                 <button
@@ -184,8 +194,8 @@ export function ReloraApp() {
                     </span>
                   </span>
                   <span className="tag-row">
-                    <Badge tone="gold">{person.stage}</Badge>
-                    <Badge tone="teal">{person.channel}</Badge>
+                    <Badge tone="gold">{crmStageLabel(person.stage)}</Badge>
+                    <Badge tone="teal">{channelLabel(person.channel)}</Badge>
                   </span>
                   <span className="person-note">{person.notes}</span>
                 </button>
@@ -193,7 +203,7 @@ export function ReloraApp() {
             </div>
           </Panel>
 
-          <Panel title="Person detail" eyebrow={selected.source}>
+          <Panel title="Karta osoby" eyebrow={selected.source}>
             <article className="person-detail">
               <div className="identity-row">
                 <Avatar initials={selected.initials} size="lg" />
@@ -201,20 +211,20 @@ export function ReloraApp() {
                   <h2>{selected.name}</h2>
                   <p>{selected.organization}</p>
                   <div className="tag-row">
-                    <Badge tone="gold">CRM: {selected.stage}</Badge>
-                    <Badge tone="blue">task: {selected.taskId}</Badge>
-                    <Badge tone="teal">kanał: {selected.channel}</Badge>
+                    <Badge tone="gold">CRM: {crmStageLabel(selected.stage)}</Badge>
+                    <Badge tone="blue">zadanie: {selected.taskId}</Badge>
+                    <Badge tone="teal">kanał: {channelLabel(selected.channel)}</Badge>
                   </div>
                 </div>
               </div>
 
               <div className="detail-grid">
                 <div className="data-box">
-                  <span>Public facts</span>
+                  <span>Fakty publiczne</span>
                   <p>{brief?.publicFacts[0] ?? `Organizacja: ${selected.organization}.`}</p>
                 </div>
                 <div className="data-box data-box-private">
-                  <span>User context</span>
+                  <span>Kontekst użytkownika</span>
                   <p>{selected.notes}</p>
                 </div>
               </div>
@@ -223,11 +233,11 @@ export function ReloraApp() {
         </section>
 
         <section className="content-grid" id="research">
-          <Panel title="Research brief" eyebrow="generowany przez /api/research">
+          <Panel title="Brief researchowy" eyebrow="generowany przez /api/research">
             {brief ? (
               <div className="research-stack">
                 <div className="research-score">
-                  <span>Confidence</span>
+                  <span>Pewność</span>
                   <strong>{brief.confidence}%</strong>
                 </div>
                 <div className="data-box">
@@ -235,7 +245,7 @@ export function ReloraApp() {
                   <p>{brief.suggestedAngle}</p>
                 </div>
                 <div className="data-box">
-                  <span>Suggested systems</span>
+                  <span>Sugerowane systemy</span>
                   <ul>
                     {brief.suggestedSystems.map((system) => (
                       <li key={system}>{system}</li>
@@ -248,15 +258,15 @@ export function ReloraApp() {
                 </div>
               </div>
             ) : (
-              <div className="empty-state">Research engine czeka na wynik.</div>
+              <div className="empty-state">Silnik researchu czeka na wynik.</div>
             )}
           </Panel>
 
-          <Panel title="Data boundary" eyebrow="public facts oddzielone od user context">
+          <Panel title="Granica danych" eyebrow="fakty publiczne oddzielone od kontekstu użytkownika">
             {brief ? (
               <div className="boundary-grid">
                 <div className="data-box">
-                  <span>Public facts</span>
+                  <span>Fakty publiczne</span>
                   <ul>
                     {brief.publicFacts.map((fact) => (
                       <li key={fact}>{fact}</li>
@@ -264,7 +274,7 @@ export function ReloraApp() {
                   </ul>
                 </div>
                 <div className="data-box data-box-private">
-                  <span>User context</span>
+                  <span>Kontekst użytkownika</span>
                   <ul>
                     {brief.userContext.map((fact) => (
                       <li key={fact}>{fact}</li>
@@ -279,7 +289,7 @@ export function ReloraApp() {
         </section>
 
         <section className="content-grid content-grid-crm" id="crm">
-          <Panel title="CRM board" eyebrow="statusy z importu, bez sztucznych leadów">
+          <Panel title="Tablica CRM" eyebrow="statusy z importu, bez sztucznych leadów">
             <div className="crm-board">
               {crmColumns.map((column) => (
                 <section className="crm-column" key={column.id}>
@@ -307,25 +317,25 @@ export function ReloraApp() {
             </div>
           </Panel>
 
-          <Panel title="Timeline" eyebrow="osoba ma historię i następny krok">
+          <Panel title="Oś czasu" eyebrow="osoba ma historię i następny krok">
             <ol className="timeline">
               <li>
                 <span>Import</span>
                 <p>Dodano kontakt, wiadomość i zadanie z paczki źródłowej.</p>
               </li>
               <li>
-                <span>Research</span>
-                <p>Brief dla {selected.name} budowany na danych public facts i user context.</p>
+                <span>Analiza</span>
+                <p>Brief dla {selected.name} budowany na faktach publicznych i kontekście użytkownika.</p>
               </li>
               <li>
                 <span>Następny krok</span>
-                <p>Preview wiadomości, ręczna akceptacja i dopiero potem wysyłka przez Resend.</p>
+                <p>Podgląd wiadomości, ręczna akceptacja i dopiero potem wysyłka przez Resend.</p>
               </li>
             </ol>
           </Panel>
         </section>
 
-        <Panel title="Relationship graph" eyebrow="powiązane węzły osoby, organizacji i tematów">
+        <Panel title="Graf relacji" eyebrow="powiązane węzły osoby, organizacji i tematów">
           <RelationshipGraph selectedId={selected.id} onSelectPerson={setSelectedId} />
           <div className="graph-summary">
             <span>Aktywne relacje dla {selected.name}</span>
@@ -334,7 +344,7 @@ export function ReloraApp() {
         </Panel>
 
         <section id="composer">
-          <Panel title="Message composer" eyebrow="preview przed Resend">
+          <Panel title="Kompozytor wiadomości" eyebrow="podgląd przed Resend">
             <div className="composer-grid">
               <form className="draft-form">
                 <label>
@@ -352,13 +362,13 @@ export function ReloraApp() {
               </form>
 
               <article className="message-preview">
-                <span>Preview wiadomości</span>
+                <span>Podgląd wiadomości</span>
                 <h3>{selected.subject}</h3>
                 <p>{selected.message}</p>
                 <div className="preview-actions">
-                  <Badge tone="gold">preview_required</Badge>
+                  <Badge tone="gold">wymagany podgląd</Badge>
                   <button className="button" type="button">
-                    Zapisz draft
+                    Zapisz szkic
                   </button>
                   <button className="button button-primary" type="button">
                     Akceptuj preview
@@ -369,7 +379,7 @@ export function ReloraApp() {
           </Panel>
         </section>
 
-        <Panel title="Alerts center" eyebrow="resend/webhook-spec.md">
+        <Panel title="Centrum alertów" eyebrow="resend/webhook-spec.md">
           <div className="alerts-center" id="alerts">
             <strong>Brak realnych alertów w dostarczonych danych.</strong>
             <p>
