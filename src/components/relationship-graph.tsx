@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { graphEdges } from "../lib/relora-data";
+import { graphEdges as fallbackGraphEdges } from "../lib/relora-data";
 
 type GraphNode = {
   x: number;
@@ -28,9 +28,11 @@ const graphNodes: Record<string, GraphNode> = {
 };
 
 export function RelationshipGraph({
+  graphEdges = fallbackGraphEdges,
   selectedId,
   onSelectPerson,
 }: {
+  graphEdges?: typeof fallbackGraphEdges;
   selectedId: string;
   onSelectPerson: (id: string) => void;
 }) {

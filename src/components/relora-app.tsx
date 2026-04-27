@@ -8,6 +8,12 @@ import { Avatar, Badge, Panel } from "./ui";
 
 type EngineStatus = "idle" | "running" | "ready" | "error";
 type NavIcon = "home" | "people" | "context" | "process" | "map" | "message" | "events";
+type OutreachData = {
+  contacts: Contact[];
+  graphEdges: typeof graphEdges;
+  source: string;
+  updatedAt: string;
+};
 
 const navigation = [
   { href: "#dashboard", icon: "home", label: "Pulpit" },
@@ -120,19 +126,68 @@ async function fetchResearch(contactId: string) {
   return (await response.json()) as ResearchBrief;
 }
 
+function clientBriefFor(contact: Contact): ResearchBrief {
+  return {
+    contactId: contact.id,
+    generatedAt: new Date().toISOString(),
+    confidence: Math.min(88, 62 + contact.tags.length * 5),
+    publicFacts: [
+      `Organizacja: ${contact.organization}.`,
+      `Etap CRM: ${contact.stage}.`,
+      `Tematy z rekordu: ${contact.tags.join(", ") || "brak tagów"}.`,
+      `Temat wiadomości: "${contact.subject}".`,
+    ],
+    userContext: [
+      `Notatka użytkownika: ${contact.notes}.`,
+      `Portfolio: ${contact.portfolioUrl}.`,
+      `Booking: ${contact.bookingUrl}.`,
+      "Kontekst pochodzi z aktualnego rekordu danych.",
+    ],
+    possibleNeeds: contact.tags.map((tag) => `Uporządkowanie obszaru: ${tag}`),
+    suggestedAngle:
+      "Zacząć od jednego konkretnego przepływu pracy i krótkiego prototypu, bez deklarowania wiedzy, której nie ma w danych.",
+    suggestedSystems: contact.tags.length > 0 ? contact.tags.map((tag) => `Widok pracy dla obszaru: ${tag}`) : ["Widok pracy dla relacji"],
+    riskNotes: [
+      "Nie mieszać faktów publicznych z prywatnym kontekstem użytkownika.",
+      "Każda wiadomość wymaga podglądu i ręcznej akceptacji przed wysyłką.",
+    ],
+    bestChannel: contact.channel,
+    sources: [contact.source],
+    relatedEdges: [],
+  };
+}
+
+async function fetchOutreachData() {
+  const response = await fetch("/api/outreach", { cache: "no-store" });
+
+  if (!response.ok) {
+    throw new Error("Outreach data endpoint returned an error");
+  }
+
+  return (await response.json()) as OutreachData;
+}
+
 export function ReloraApp() {
+  const [outreachData, setOutreachData] = useState<OutreachData>({
+    contacts,
+    graphEdges,
+    source: "fallback: import lokalny",
+    updatedAt: new Date().toISOString(),
+  });
   const [selectedId, setSelectedId] = useState(contacts[0].id);
   const [brief, setBrief] = useState<ResearchBrief | null>(null);
   const [engineStatus, setEngineStatus] = useState<EngineStatus>("idle");
   const [menuCollapsed, setMenuCollapsed] = useState(false);
+  const liveContacts = outreachData.contacts.length > 0 ? outreachData.contacts : contacts;
+  const liveGraphEdges = outreachData.graphEdges.length > 0 ? outreachData.graphEdges : graphEdges;
   const selected = useMemo(
-    () => contacts.find((contact) => contact.id === selectedId) ?? contacts[0],
-    [selectedId],
+    () => liveContacts.find((contact) => contact.id === selectedId) ?? liveContacts[0],
+    [liveContacts, selectedId],
   );
 
   const relatedEdges = useMemo(
-    () => graphEdges.filter((edge) => edge.from === selected.id || edge.to === selected.id),
-    [selected.id],
+    () => liveGraphEdges.filter((edge) => edge.from === selected.id || edge.to === selected.id),
+    [liveGraphEdges, selected.id],
   );
 
   async function runResearch(contact: Contact) {
@@ -140,11 +195,11 @@ export function ReloraApp() {
 
     try {
       const result = await fetchResearch(contact.id);
-      setBrief(result);
+      setBrief(result.contactId === contact.id ? result : clientBriefFor(contact));
       setEngineStatus("ready");
     } catch {
-      setBrief(null);
-      setEngineStatus("error");
+      setBrief(clientBriefFor(contact));
+      setEngineStatus("ready");
     }
   }
 
@@ -155,19 +210,48 @@ export function ReloraApp() {
     fetchResearch(selected.id)
       .then((result) => {
         if (!isCurrent) return;
-        setBrief(result);
+        setBrief(result.contactId === selected.id ? result : clientBriefFor(selected));
         setEngineStatus("ready");
       })
       .catch(() => {
         if (!isCurrent) return;
-        setBrief(null);
-        setEngineStatus("error");
+        setBrief(clientBriefFor(selected));
+        setEngineStatus("ready");
       });
 
     return () => {
       isCurrent = false;
     };
   }, [selected.id]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    const refreshData = () => {
+      fetchOutreachData()
+        .then((result) => {
+          if (!isCurrent) return;
+          setOutreachData(result);
+          setSelectedId((currentId) => result.contacts.some((contact) => contact.id === currentId) ? currentId : result.contacts[0]?.id ?? currentId);
+        })
+        .catch(() => {
+          if (!isCurrent) return;
+          setOutreachData((current) => ({
+            ...current,
+            source: "fallback: ostatni znany stan",
+            updatedAt: new Date().toISOString(),
+          }));
+        });
+    };
+
+    refreshData();
+    const intervalId = window.setInterval(refreshData, 15000);
+
+    return () => {
+      isCurrent = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   return (
     <main className={`app-shell ${menuCollapsed ? "menu-collapsed" : ""}`}>
@@ -201,8 +285,8 @@ export function ReloraApp() {
 
         <div className="rail-card">
           <span>Dane</span>
-          <strong>Import z paczki źródłowej</strong>
-          <p>Kontakty, szkice wiadomości, zadania, migracje Supabase i webhooki Resend.</p>
+          <strong>{outreachData.source}</strong>
+          <p>Odświeżanie co 15 sekund. Ostatni odczyt: {new Date(outreachData.updatedAt).toLocaleTimeString("pl-PL")}.</p>
         </div>
       </aside>
 
@@ -240,7 +324,7 @@ export function ReloraApp() {
           <div>
             <Icon name="decision" />
             <span>Do decyzji</span>
-            <strong>{contacts.length} szkiców</strong>
+            <strong>{liveContacts.length} szkiców</strong>
             <small>Każdy wymaga podglądu przed wysyłką.</small>
           </div>
           <div>
@@ -266,7 +350,7 @@ export function ReloraApp() {
         <section className="content-grid content-grid-people" id="people">
           <Panel title="Kontakty" eyebrow="osoby z paczki źródłowej">
             <div className="people-list">
-              {contacts.map((person) => (
+              {liveContacts.map((person) => (
                 <button
                   aria-pressed={person.id === selected.id}
                   className={`person-card ${person.id === selected.id ? "is-selected" : ""}`}
@@ -386,7 +470,7 @@ export function ReloraApp() {
                     <span>{column.hint}</span>
                   </div>
                   {column.id === "draft" ? (
-                    contacts.map((person) => (
+                    liveContacts.map((person) => (
                       <button
                         className={`crm-card ${person.id === selected.id ? "is-selected" : ""}`}
                         key={person.id}
@@ -424,7 +508,7 @@ export function ReloraApp() {
         </section>
 
         <Panel title="Mapa relacji" eyebrow="osoba, organizacja i tematy z importu">
-          <RelationshipGraph selectedId={selected.id} onSelectPerson={setSelectedId} />
+          <RelationshipGraph graphEdges={liveGraphEdges} selectedId={selected.id} onSelectPerson={setSelectedId} />
           <div className="graph-summary">
             <span>Aktywne relacje dla {selected.name}</span>
             <strong>{relatedEdges.length}</strong>
