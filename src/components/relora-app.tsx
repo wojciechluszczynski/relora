@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { contacts, graphEdges, type Contact } from "../lib/relora-data";
+import { organizationSources, type OrganizationSource } from "../lib/organization-sources";
 import type { ResearchBrief } from "../lib/research-engine";
 import { RelationshipGraph } from "./relationship-graph";
 import { Avatar, Badge, Panel } from "./ui";
@@ -11,6 +12,7 @@ type NavIcon = "home" | "people" | "context" | "process" | "map" | "message" | "
 type OutreachData = {
   contacts: Contact[];
   graphEdges: typeof graphEdges;
+  organizationSources: OrganizationSource[];
   source: string;
   updatedAt: string;
 };
@@ -171,6 +173,7 @@ export function ReloraApp() {
   const [outreachData, setOutreachData] = useState<OutreachData>({
     contacts,
     graphEdges,
+    organizationSources,
     source: "fallback: import lokalny",
     updatedAt: new Date().toISOString(),
   });
@@ -180,6 +183,7 @@ export function ReloraApp() {
   const [menuCollapsed, setMenuCollapsed] = useState(false);
   const liveContacts = outreachData.contacts.length > 0 ? outreachData.contacts : contacts;
   const liveGraphEdges = outreachData.graphEdges.length > 0 ? outreachData.graphEdges : graphEdges;
+  const liveOrganizationSources = outreachData.organizationSources.length > 0 ? outreachData.organizationSources : organizationSources;
   const selected = useMemo(
     () => liveContacts.find((contact) => contact.id === selectedId) ?? liveContacts[0],
     [liveContacts, selectedId],
@@ -558,6 +562,25 @@ export function ReloraApp() {
               Relora nie dopisuje aktywności bez źródła. Zdarzenia pojawią się po webhookach Resend
               zapisanych w Supabase: wysłano, dostarczono, otwarto, kliknięto, odpisano, odrzucono albo nie wysłano.
             </p>
+          </div>
+        </Panel>
+
+        <Panel title="Źródła organizacyjne" eyebrow="schematy UMŁ i strona władz miasta">
+          <div className="source-grid">
+            {liveOrganizationSources.map((source) => (
+              <article className="source-card" key={source.id}>
+                <span>{source.kind === "pdf" ? "PDF" : "Strona www"}</span>
+                <h3>{source.title}</h3>
+                <p>{source.authority}</p>
+                {source.validFrom ? <small>Zakres: {source.validFrom}{source.validTo ? ` - ${source.validTo}` : ""}</small> : null}
+                <ul>
+                  {source.facts.map((fact) => (
+                    <li key={fact}>{fact}</li>
+                  ))}
+                </ul>
+                {source.url ? <a href={source.url}>Otwórz źródło</a> : null}
+              </article>
+            ))}
           </div>
         </Panel>
       </div>

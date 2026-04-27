@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { contacts as fallbackContacts, graphEdges as fallbackGraphEdges, organizations, topics, type Contact } from "../../../lib/relora-data";
+import { organizationSources } from "../../../lib/organization-sources";
 
 type SupabasePerson = {
   id: string;
@@ -72,6 +73,7 @@ function fallbackPayload(reason: string) {
       contacts: fallbackContacts,
       graphEdges: fallbackGraphEdges,
       organizations,
+      organizationSources,
       topics,
       source: reason,
       updatedAt: new Date().toISOString(),
@@ -161,6 +163,7 @@ export async function GET() {
         contacts: liveContacts,
         graphEdges: fallbackGraphEdges,
         organizations: orgRows,
+        organizationSources,
         topics,
         source: "Supabase REST",
         updatedAt: new Date().toISOString(),
