@@ -94,6 +94,10 @@ ol {
   width: 100%;
 }
 
+.app-shell.menu-collapsed {
+  --rail: 88px;
+}
+
 .side-rail {
   align-self: start;
   background:
@@ -109,11 +113,41 @@ ol {
   top: 0;
 }
 
+.rail-top {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
 .brand {
   align-items: center;
   display: flex;
   gap: 12px;
   min-width: 0;
+}
+
+.brand-copy {
+  min-width: 0;
+}
+
+.rail-toggle {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: var(--radius);
+  color: rgba(249, 246, 239, 0.78);
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.rail-toggle:hover,
+.rail-toggle:focus-visible {
+  color: #fff;
+  outline: none;
 }
 
 .brand-mark {
@@ -152,9 +186,12 @@ ol {
 }
 
 .nav-list a {
+  align-items: center;
   border: 1px solid transparent;
   border-radius: var(--radius);
   color: rgba(249, 246, 239, 0.76);
+  display: flex;
+  gap: 10px;
   padding: 10px 12px;
 }
 
@@ -175,22 +212,46 @@ ol {
   padding: 14px;
 }
 
+.side-rail.is-collapsed {
+  padding-inline: 16px;
+}
+
+.side-rail.is-collapsed .brand-copy,
+.side-rail.is-collapsed .nav-label,
+.side-rail.is-collapsed .rail-card {
+  display: none;
+}
+
+.side-rail.is-collapsed .rail-top {
+  display: grid;
+  justify-items: center;
+}
+
+.side-rail.is-collapsed .nav-list a {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.side-rail.is-collapsed .rail-toggle {
+  transform: rotate(180deg);
+}
+
 .rail-card span,
 .eyebrow,
 .data-box span,
 .research-score span,
 .engine-card span,
-.metric-grid span,
+.work-grid span,
 .message-preview > span,
 .crm-column-head span,
 .timeline span,
 .alerts-center strong,
 .graph-summary span {
   color: var(--quiet);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 760;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
 }
 
 .rail-card span {
@@ -218,7 +279,7 @@ ol {
   color: #fffaf1;
   display: grid;
   gap: 18px;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 330px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
   min-width: 0;
   min-height: 300px;
   padding: clamp(20px, 3vw, 32px);
@@ -262,6 +323,53 @@ ol {
   padding: 7px 10px;
 }
 
+.hero-side {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.relationship-glyph {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+  min-height: 156px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.relationship-glyph svg {
+  height: 120px;
+  width: 100%;
+}
+
+.relationship-glyph path {
+  fill: none;
+  stroke: rgba(245, 210, 127, 0.42);
+  stroke-width: 2;
+}
+
+.relationship-glyph circle {
+  fill: rgba(255, 255, 255, 0.12);
+  stroke: rgba(255, 250, 241, 0.56);
+  stroke-width: 2;
+}
+
+.relationship-glyph span {
+  color: rgba(255, 250, 241, 0.58);
+  display: block;
+  font-size: 12px;
+}
+
+.relationship-glyph strong {
+  color: #fffaf1;
+  display: block;
+  font-size: 15px;
+  margin-top: 2px;
+}
+
 .engine-card {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -299,13 +407,13 @@ ol {
   color: #1b1710;
 }
 
-.metric-grid {
+.work-grid {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.metric-grid div {
+.work-grid div {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -316,13 +424,29 @@ ol {
   padding: 16px;
 }
 
-.metric-grid strong {
-  font-family: "Relora Display", "Relora Inter", sans-serif;
-  font-size: 32px;
+.work-grid .icon {
+  color: var(--teal);
+  height: 22px;
+  width: 22px;
 }
 
-.metric-grid small {
+.work-grid strong {
+  display: block;
+  font-family: "Relora Display", "Relora Inter", sans-serif;
+  font-size: 22px;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+
+.work-grid small {
   color: var(--muted);
+  line-height: 1.45;
+}
+
+.icon {
+  flex: 0 0 auto;
+  height: 18px;
+  width: 18px;
 }
 
 .content-grid {
@@ -657,7 +781,7 @@ ol {
   color: var(--quiet);
   font-size: 10px;
   font-weight: 760;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .graph-node-person.is-active {
@@ -765,6 +889,15 @@ ol {
     position: relative;
   }
 
+  .app-shell.menu-collapsed {
+    --rail: 1fr;
+  }
+
+  .side-rail.is-collapsed .brand-copy,
+  .side-rail.is-collapsed .nav-label {
+    display: block;
+  }
+
   .nav-list {
     display: flex;
     gap: 6px;
@@ -780,6 +913,7 @@ ol {
   }
 
   .hero,
+  .hero-side,
   .content-grid,
   .content-grid-people,
   .content-grid-crm,
@@ -803,7 +937,7 @@ ol {
     font-size: 31px;
   }
 
-  .metric-grid,
+  .work-grid,
   .detail-grid,
   .boundary-grid,
   .crm-board {

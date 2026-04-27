@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { contacts, graphEdges, organizations, topics, type Contact } from "../lib/relora-data";
+import { contacts, graphEdges, type Contact } from "../lib/relora-data";
 import type { ResearchBrief } from "../lib/research-engine";
 import { RelationshipGraph } from "./relationship-graph";
 import { Avatar, Badge, Panel } from "./ui";
 
 type EngineStatus = "idle" | "running" | "ready" | "error";
+type NavIcon = "home" | "people" | "context" | "process" | "map" | "message" | "events";
 
 const navigation = [
-  ["Pulpit", "#dashboard"],
-  ["Osoby", "#people"],
-  ["Analiza", "#research"],
-  ["CRM", "#crm"],
-  ["Graf", "#graph"],
-  ["Wiadomości", "#composer"],
-  ["Alerty", "#alerts"],
+  { href: "#dashboard", icon: "home", label: "Pulpit" },
+  { href: "#people", icon: "people", label: "Kontakty" },
+  { href: "#research", icon: "context", label: "Kontekst" },
+  { href: "#crm", icon: "process", label: "Proces" },
+  { href: "#graph", icon: "map", label: "Mapa relacji" },
+  { href: "#composer", icon: "message", label: "Wiadomość" },
+  { href: "#alerts", icon: "events", label: "Zdarzenia" },
 ] as const;
 
 const crmColumns = [
@@ -35,10 +36,78 @@ function channelLabel(channel: string) {
 }
 
 function statusLabel(status: EngineStatus) {
-  if (status === "running") return "research pracuje";
-  if (status === "ready") return "brief gotowy";
-  if (status === "error") return "błąd researchu";
+  if (status === "running") return "analizuję kontekst";
+  if (status === "ready") return "notatka gotowa";
+  if (status === "error") return "analiza przerwana";
   return "oczekuje";
+}
+
+function Icon({ name }: { name: NavIcon | "collapse" | "decision" | "layers" | "link" }) {
+  const common = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 1.8 } as const;
+
+  return (
+    <svg aria-hidden="true" className="icon" viewBox="0 0 24 24">
+      {name === "home" ? <path {...common} d="M4 10.5 12 4l8 6.5V20H5.5v-7H4z" /> : null}
+      {name === "people" ? (
+        <>
+          <path {...common} d="M8.2 11.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" />
+          <path {...common} d="M3.5 19.5c.7-3.5 2.4-5.2 5-5.2s4.3 1.7 5 5.2" />
+          <path {...common} d="M16.8 10.7a2.7 2.7 0 1 0 0-5.4" />
+          <path {...common} d="M15.5 14.5c2.4.3 4 1.9 4.8 5" />
+        </>
+      ) : null}
+      {name === "context" ? (
+        <>
+          <path {...common} d="M5 6.5h14M5 12h10M5 17.5h7" />
+          <path {...common} d="M17 14.5l2 2 2-2" />
+        </>
+      ) : null}
+      {name === "process" ? (
+        <>
+          <path {...common} d="M5 7h4v4H5zM15 4h4v4h-4zM15 16h4v4h-4z" />
+          <path {...common} d="M9 9h3.5c2.2 0 3.5-1.1 3.5-3M9 9h3.5c2.2 0 3.5 1.1 3.5 3v4" />
+        </>
+      ) : null}
+      {name === "map" ? (
+        <>
+          <path {...common} d="M6 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM18 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM12 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+          <path {...common} d="M7.8 6.2 16.2 6M7.2 7.4l3.8 9.8M16.8 8.2l-3.6 8.9" />
+        </>
+      ) : null}
+      {name === "message" ? <path {...common} d="M4 6h16v10H9l-5 4z" /> : null}
+      {name === "events" ? (
+        <>
+          <path {...common} d="M7 5h10M6 9h12M8 13h5M8 17h8" />
+          <path {...common} d="M5 3h14v18H5z" />
+        </>
+      ) : null}
+      {name === "collapse" ? <path {...common} d="M15 6 9 12l6 6M5 5v14" /> : null}
+      {name === "decision" ? <path {...common} d="M5 12h7M12 5v14M12 12l7-5v10z" /> : null}
+      {name === "layers" ? <path {...common} d="m12 4 8 4-8 4-8-4zM4 12l8 4 8-4M4 16l8 4 8-4" /> : null}
+      {name === "link" ? <path {...common} d="M9.5 7.5 11 6a4 4 0 0 1 5.7 5.7l-1.4 1.4M14.5 16.5 13 18a4 4 0 0 1-5.7-5.7l1.4-1.4M9.5 14.5l5-5" /> : null}
+    </svg>
+  );
+}
+
+function RelationshipGlyph() {
+  return (
+    <div className="relationship-glyph" aria-hidden="true">
+      <svg viewBox="0 0 220 160">
+        <path d="M42 82C62 34 120 20 174 48" />
+        <path d="M45 84c35 18 73 26 132 4" />
+        <path d="M94 124c25-24 55-44 86-72" />
+        <circle cx="42" cy="82" r="18" />
+        <circle cx="98" cy="124" r="14" />
+        <circle cx="176" cy="48" r="16" />
+        <circle cx="178" cy="88" r="20" />
+        <circle cx="110" cy="50" r="8" />
+      </svg>
+      <div>
+        <span>Mapa pracy</span>
+        <strong>{contacts.length} kontaktów, {graphEdges.length} relacji</strong>
+      </div>
+    </div>
+  );
 }
 
 async function fetchResearch(contactId: string) {
@@ -55,6 +124,7 @@ export function ReloraApp() {
   const [selectedId, setSelectedId] = useState(contacts[0].id);
   const [brief, setBrief] = useState<ResearchBrief | null>(null);
   const [engineStatus, setEngineStatus] = useState<EngineStatus>("idle");
+  const [menuCollapsed, setMenuCollapsed] = useState(false);
   const selected = useMemo(
     () => contacts.find((contact) => contact.id === selectedId) ?? contacts[0],
     [selectedId],
@@ -100,83 +170,101 @@ export function ReloraApp() {
   }, [selected.id]);
 
   return (
-    <main className="app-shell">
-      <aside className="side-rail" aria-label="Nawigacja Relora">
-        <a className="brand" href="#dashboard" aria-label="Relora dashboard">
-          <span className="brand-mark">R</span>
-          <span>
-            <strong>Relora</strong>
-            <small>inteligencja relacji</small>
-          </span>
-        </a>
+    <main className={`app-shell ${menuCollapsed ? "menu-collapsed" : ""}`}>
+      <aside className={`side-rail ${menuCollapsed ? "is-collapsed" : ""}`} aria-label="Nawigacja Relora">
+        <div className="rail-top">
+          <a className="brand" href="#dashboard" aria-label="Relora">
+            <span className="brand-mark">R</span>
+            <span className="brand-copy">
+              <strong>Relora</strong>
+              <small>inteligencja relacji</small>
+            </span>
+          </a>
+          <button
+            aria-label={menuCollapsed ? "Rozwiń menu" : "Zwiń menu"}
+            className="rail-toggle"
+            onClick={() => setMenuCollapsed((value) => !value)}
+            type="button"
+          >
+            <Icon name="collapse" />
+          </button>
+        </div>
 
         <nav className="nav-list">
-          {navigation.map(([label, href]) => (
+          {navigation.map(({ href, icon, label }) => (
             <a href={href} key={href}>
-              {label}
+              <Icon name={icon} />
+              <span className="nav-label">{label}</span>
             </a>
           ))}
         </nav>
 
         <div className="rail-card">
-          <span>Źródło prawdy</span>
-          <strong>Import gotowy pod Supabase</strong>
-          <p>contacts.csv, messages.csv, tasks.csv, migrations i spec webhooków Resend.</p>
+          <span>Dane</span>
+          <strong>Import z paczki źródłowej</strong>
+          <p>Kontakty, szkice wiadomości, zadania, migracje Supabase i webhooki Resend.</p>
         </div>
       </aside>
 
       <div className="workspace">
         <header className="hero" id="dashboard">
           <div className="hero-copy">
-            <span className="eyebrow">Relora Intelligence OS · Supabase realtime · bramka podglądu Resend</span>
-            <h1>Kokpit relacji, analizy i wysyłki działający na realnych rekordach.</h1>
+            <span className="eyebrow">Relora · relacje · kontekst · wysyłka</span>
+            <h1>Jedno miejsce do pracy nad relacją przed pierwszą wiadomością.</h1>
             <p>
-              Wybierz osobę, sprawdź separację faktów publicznych i kontekstu użytkownika, zobacz graf powiązań,
-              status CRM oraz wiadomość zanim trafi do Resend.
+              Po lewej wybierasz kontakt. W środku widzisz notatkę analityczną, źródła, status sprawy,
+              mapę powiązań i szkic wiadomości. Nic nie wychodzi bez podglądu i ręcznej akceptacji.
             </p>
-            <div className="hero-strip" aria-label="Architektura aplikacji">
-              <span>Brief researchowy</span>
-              <span>CRM status</span>
-              <span>Oś czasu</span>
-              <span>Sugerowane wiadomości</span>
+            <div className="hero-strip" aria-label="Najważniejsze zasady pracy">
+              <span>Fakty publiczne osobno</span>
+              <span>Kontekst użytkownika osobno</span>
+              <span>Podgląd przed wysyłką</span>
+              <span>Resend dopiero po akceptacji</span>
             </div>
           </div>
 
-          <div className="engine-card" aria-live="polite">
-            <span>Silnik researchu</span>
-            <strong>{statusLabel(engineStatus)}</strong>
-            <p>{selected.name}</p>
-            <button className="button button-primary" onClick={() => runResearch(selected)} type="button">
-              Uruchom ponownie
-            </button>
+          <div className="hero-side">
+            <RelationshipGlyph />
+            <div className="engine-card" aria-live="polite">
+              <span>Wybrany kontakt</span>
+              <strong>{statusLabel(engineStatus)}</strong>
+              <p>{selected.name}</p>
+              <button className="button button-primary" onClick={() => runResearch(selected)} type="button">
+                Odśwież analizę
+              </button>
+            </div>
           </div>
         </header>
 
-        <section className="metric-grid" aria-label="Podsumowanie importu">
+        <section className="work-grid" aria-label="Najważniejsze informacje robocze">
           <div>
-            <span>Kontakty</span>
-            <strong>{contacts.length}</strong>
-            <small>contacts.csv</small>
+            <Icon name="decision" />
+            <span>Do decyzji</span>
+            <strong>{contacts.length} szkiców</strong>
+            <small>Każdy wymaga podglądu przed wysyłką.</small>
           </div>
           <div>
-            <span>Organizacje</span>
-            <strong>{organizations.length}</strong>
-            <small>węzły grafu</small>
+            <Icon name="people" />
+            <span>Teraz pracujesz nad</span>
+            <strong>{selected.name}</strong>
+            <small>{selected.organization}</small>
           </div>
           <div>
-            <span>Tematy</span>
-            <strong>{topics.length}</strong>
-            <small>warstwa researchu</small>
+            <Icon name="layers" />
+            <span>Granica danych</span>
+            <strong>2 warstwy</strong>
+            <small>Fakty publiczne nie są mieszane z Twoją notatką.</small>
           </div>
           <div>
-            <span>Krawędzie</span>
-            <strong>{graphEdges.length}</strong>
-            <small>relacje person-org-topic</small>
+            <Icon name="link" />
+            <span>Powiązania kontaktu</span>
+            <strong>{relatedEdges.length} relacje</strong>
+            <small>Organizacja i tematy dla wybranej osoby.</small>
           </div>
         </section>
 
         <section className="content-grid content-grid-people" id="people">
-          <Panel title="Lista osób" eyebrow="realne osoby z importu">
+          <Panel title="Kontakty" eyebrow="osoby z paczki źródłowej">
             <div className="people-list">
               {contacts.map((person) => (
                 <button
@@ -203,7 +291,7 @@ export function ReloraApp() {
             </div>
           </Panel>
 
-          <Panel title="Karta osoby" eyebrow={selected.source}>
+          <Panel title="Karta kontaktu" eyebrow={selected.source}>
             <article className="person-detail">
               <div className="identity-row">
                 <Avatar initials={selected.initials} size="lg" />
@@ -233,7 +321,7 @@ export function ReloraApp() {
         </section>
 
         <section className="content-grid" id="research">
-          <Panel title="Brief researchowy" eyebrow="generowany przez /api/research">
+          <Panel title="Notatka analityczna" eyebrow="generowana przez /api/research">
             {brief ? (
               <div className="research-stack">
                 <div className="research-score">
@@ -241,11 +329,11 @@ export function ReloraApp() {
                   <strong>{brief.confidence}%</strong>
                 </div>
                 <div className="data-box">
-                  <span>Najlepszy angle</span>
+                  <span>Najlepsze wejście</span>
                   <p>{brief.suggestedAngle}</p>
                 </div>
                 <div className="data-box">
-                  <span>Sugerowane systemy</span>
+                  <span>Proponowane kierunki</span>
                   <ul>
                     {brief.suggestedSystems.map((system) => (
                       <li key={system}>{system}</li>
@@ -258,11 +346,11 @@ export function ReloraApp() {
                 </div>
               </div>
             ) : (
-              <div className="empty-state">Silnik researchu czeka na wynik.</div>
+              <div className="empty-state">Analiza czeka na wynik.</div>
             )}
           </Panel>
 
-          <Panel title="Granica danych" eyebrow="fakty publiczne oddzielone od kontekstu użytkownika">
+          <Panel title="Granica danych" eyebrow="fakty publiczne i kontekst użytkownika są pokazane osobno">
             {brief ? (
               <div className="boundary-grid">
                 <div className="data-box">
@@ -289,7 +377,7 @@ export function ReloraApp() {
         </section>
 
         <section className="content-grid content-grid-crm" id="crm">
-          <Panel title="Tablica CRM" eyebrow="statusy z importu, bez sztucznych leadów">
+          <Panel title="Proces" eyebrow="statusy z importu, bez sztucznych leadów">
             <div className="crm-board">
               {crmColumns.map((column) => (
                 <section className="crm-column" key={column.id}>
@@ -317,7 +405,7 @@ export function ReloraApp() {
             </div>
           </Panel>
 
-          <Panel title="Oś czasu" eyebrow="osoba ma historię i następny krok">
+          <Panel title="Oś czasu" eyebrow="historia kontaktu i następny krok">
             <ol className="timeline">
               <li>
                 <span>Import</span>
@@ -335,7 +423,7 @@ export function ReloraApp() {
           </Panel>
         </section>
 
-        <Panel title="Graf relacji" eyebrow="powiązane węzły osoby, organizacji i tematów">
+        <Panel title="Mapa relacji" eyebrow="osoba, organizacja i tematy z importu">
           <RelationshipGraph selectedId={selected.id} onSelectPerson={setSelectedId} />
           <div className="graph-summary">
             <span>Aktywne relacje dla {selected.name}</span>
@@ -344,7 +432,7 @@ export function ReloraApp() {
         </Panel>
 
         <section id="composer">
-          <Panel title="Kompozytor wiadomości" eyebrow="podgląd przed Resend">
+          <Panel title="Wiadomość" eyebrow="podgląd przed Resend">
             <div className="composer-grid">
               <form className="draft-form">
                 <label>
@@ -371,7 +459,7 @@ export function ReloraApp() {
                     Zapisz szkic
                   </button>
                   <button className="button button-primary" type="button">
-                    Akceptuj preview
+                    Akceptuj podgląd
                   </button>
                 </div>
               </article>
@@ -379,12 +467,12 @@ export function ReloraApp() {
           </Panel>
         </section>
 
-        <Panel title="Centrum alertów" eyebrow="resend/webhook-spec.md">
+        <Panel title="Zdarzenia" eyebrow="resend/webhook-spec.md">
           <div className="alerts-center" id="alerts">
             <strong>Brak realnych alertów w dostarczonych danych.</strong>
             <p>
-              Relora nie zmyśla aktywności. Alerty pojawią się po webhookach Resend zapisanych w
-              Supabase jako sent, delivered, opened, clicked, replied, bounced albo failed.
+              Relora nie dopisuje aktywności bez źródła. Zdarzenia pojawią się po webhookach Resend
+              zapisanych w Supabase: wysłano, dostarczono, otwarto, kliknięto, odpisano, odrzucono albo nie wysłano.
             </p>
           </div>
         </Panel>
