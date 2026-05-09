@@ -1,77 +1,70 @@
 # Relora
 
-B2B SaaS prototype do zarzadzania relacjami biznesowymi, people intelligence i outreachem zatwierdzanym przez czlowieka.
+B2B SaaS prototype do zarządzania relacjami biznesowymi, people intelligence i outreachem zatwierdzanym przez człowieka.
 
-Zamiast klasycznego CRM, Relora laczy graf relacji, kontekst kontaktow, research briefy, playbooki wiadomosci i zrodla danych w jednym interfejsie.
+Zamiast klasycznego CRM, Relora łączy graf relacji, kontekst kontaktów, research briefy, playbooki wiadomości i źródła danych w jednym interfejsie.
 
-## Co To Jest
+**Live:** [relora-jet.vercel.app](https://relora-jet.vercel.app)
 
-Narzędzie dla founders, sprzedawcow i osob prowadzacych precyzyjny outreach do konkretnych ludzi, a nie anonimowych list mailingowych. Relora pomaga sprawdzic kto zna kogo, przygotowac brief przed rozmowa i napisac wiadomosc osadzona w realnym kontekscie relacji.
+---
+
+## Co to jest
+
+Narzędzie dla founderów, sprzedawców i osób prowadzących precyzyjny outreach do konkretnych ludzi, a nie anonimowych list mailingowych. Relora pozwala sprawdzić kto zna kogo, przygotować brief przed rozmową i napisać wiadomość osadzoną w realnym kontekście relacji.
+
+---
 
 ## Funkcje
 
-- Graf relacji do mapowania osob, organizacji i wprowadzen
-- Karty kontaktow z notatkami, kontekstem i historia interakcji
-- People intelligence i research briefy przed rozmowa
-- Outreach cockpit z podgladem wiadomosci przed wysylka
-- Widok zrodel rozdzielajacy public facts od private relationship context
-- API pod Resend oraz dokumentacja webhookow
-- Migracje Supabase dla schematu bazy i RLS
-- Polskie etykiety interfejsu i osobne trasy aplikacji
+- **Graf relacji** — mapowanie osób, organizacji i wprowadzeń
+- **Karty kontaktów** — notatki, kontekst i historia interakcji
+- **People intelligence** — research briefy przed rozmową
+- **Outreach cockpit** — podgląd wiadomości przed wysyłką, zatwierdzanie przez człowieka
+- **Źródła danych** — rozdzielenie public facts od private relationship context
+- **Email API** — integracja z Resend, dokumentacja webhooków
+- **Supabase** — migracje schematu bazy i RLS
+
+---
 
 ## Stack
 
-- Next.js 16
-- React 19
-- TypeScript
-- Supabase-ready data model
-- Resend-ready email flow
+| Warstwa | Technologia |
+|---|---|
+| Framework | Next.js 16 + TypeScript |
+| Frontend | React 19 |
+| Database | Supabase (schema + RLS migrations) |
+| Email | Resend |
+| Hosting | Vercel |
 
-## Struktura Projektu
+---
 
-```text
-src/app/              trasy Next.js i endpointy API
-src/components/       glowny interfejs Relora i komponenty UI
-src/lib/              dane demo, logika researchu i zrodla organizacji
-public/               fonty, portrety i assety wizualne
-docs/                 notatki produktowe i specyfikacje
-examples/             przykladowe dane wejsciowe i parser notes
-resend/               dokumentacja webhookow Resend
-supabase/migrations/  schema SQL i migracje RLS
-```
-
-## Lokalne Uruchomienie
+## Lokalne uruchomienie
 
 ```bash
 npm install
 npm run dev
 ```
 
-Aplikacja bedzie dostepna pod `http://localhost:3000`.
+Aplikacja dostępna pod [http://localhost:3000](http://localhost:3000).
 
-## Zmienne Srodowiskowe
-
-Skopiuj `.env.example` do `.env.local` i uzupelnij klucze dla uslug, ktore chcesz wlaczyc:
+Skopiuj `.env.example` do `.env.local` i uzupełnij klucze:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Statyczny prototyp moze dzialac bez live keys. Klucze Supabase, Resend i providerow AI sa potrzebne dopiero dla podlaczonych flow backendowych.
+Statyczny prototyp działa bez live keys. Klucze Supabase i Resend są potrzebne dopiero dla backendowych flow.
 
-## Build
+---
 
-```bash
-npm run build
+## Struktura
+
 ```
-
-## Deployment
-
-Projekt jest gotowy do GitHuba i deploymentu w stylu Vercel:
-
-```bash
-git remote -v
-git push origin main
+src/app/              trasy Next.js i endpointy API
+src/components/       główny interfejs i komponenty UI
+src/lib/              dane demo, logika researchu, źródła organizacji
+public/               fonty, portrety i assety wizualne
+docs/                 notatki produktowe i specyfikacje
+resend/               dokumentacja webhooków
+supabase/migrations/  schema SQL i migracje RLS
 ```
-
-Przed wlaczeniem produkcyjnych integracji ustaw zmienne srodowiskowe w platformie deploymentowej.
