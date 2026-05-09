@@ -1,0 +1,18 @@
+[
+  {
+    "full_name": "Anna Kowalska",
+    "headline": "Head of Partnerships at Example Ventures",
+    "relationship_status": "met_once",
+    "company": "Example Ventures",
+    "possible_needs": ["warm lead sourcing", "growth partnerships"],
+    "suggested_angle": "nawiązanie do wcześniejszej rozmowy o partnerstwach growth"
+  },
+  {
+    "full_name": "Marek Nowak",
+    "headline": "Founder at SaaS Forge",
+    "relationship_status": "unknown",
+    "company": "SaaS Forge",
+    "possible_needs": ["positioning", "demand generation"],
+    "suggested_angle": "krótki outreach z propozycją konkretnego audytu"
+  }
+]

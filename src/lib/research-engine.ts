@@ -17,19 +17,19 @@ export type ResearchBrief = {
 
 function systemsFor(contact: Contact) {
   const text = `${contact.notes} ${contact.message}`.toLowerCase();
-  if (text.includes("event")) {
-    return ["Łódź Event Intelligence Platform", "EventOps Command Center", "Sponsor & Partner Value Dashboard"];
+  if (text.includes("zgłosz") || text.includes("utrzymanie") || text.includes("awaria")) {
+    return ["Maintenance Request Cockpit", "Owner Update Queue", "Vendor Follow-up Tracker"];
   }
-  if (text.includes("holding") || text.includes("governance")) {
-    return ["Governance Cockpit dla Holdingu", "Issue Radar + Playbook", "Public Value Dashboard"];
+  if (text.includes("check-in") || text.includes("wakacyj")) {
+    return ["Guest Ops Timeline", "Cleaning Handoff Board", "Review Recovery Workflow"];
   }
   if (text.includes("inwestor")) {
-    return ["Investor Pipeline Cockpit", "Economic Development Dashboard", "Partner Follow-up System"];
+    return ["Investor Relation Map", "Portfolio Reporting Desk", "Decision Follow-up System"];
   }
-  if (text.includes("cyber") || text.includes("ai")) {
-    return ["AI Policy Briefing System", "Cyber & Public Affairs Radar", "Constituent Knowledge Base"];
+  if (text.includes("umow") || text.includes("właściciel")) {
+    return ["Owner Context Timeline", "Contract Renewal Queue", "Message Approval Desk"];
   }
-  return ["Knowledge Ops System", "Resident Service Workflow", "Internal Process Cockpit"];
+  return ["Property CRM Workspace", "Relationship Context Map", "Manual Approval Inbox"];
 }
 
 export function runResearch(contactId: string): ResearchBrief {
@@ -43,7 +43,7 @@ export function runResearch(contactId: string): ResearchBrief {
     confidence: Math.min(92, 64 + contact.tags.length * 5 + relatedEdges.length * 3),
     publicFacts: [
       `Organizacja: ${contact.organization}.`,
-      `Etap CRM z importu: ${contact.stage}.`,
+      `Etap CRM w demo: ${contact.stage}.`,
       `Tematy z rekordu: ${contact.tags.join(", ")}.`,
       `Wiadomość źródłowa ma temat: "${contact.subject}".`,
     ],
@@ -51,19 +51,19 @@ export function runResearch(contactId: string): ResearchBrief {
       `Notatka użytkownika: ${contact.notes}.`,
       `Portfolio: ${contact.portfolioUrl}.`,
       `Booking: ${contact.bookingUrl}.`,
-      "Kontekst pochodzi z paczki importowej, nie z publicznego scrapingu.",
+      "Kontekst pochodzi z fikcyjnego datasetu demo oraz notatek dopisywanych w UI.",
     ],
     possibleNeeds: contact.tags.map((tag) => `Uporządkowanie obszaru: ${tag}`),
     suggestedAngle:
-      "Wejść przez jeden konkretny workflow i krótki prototyp, nie przez ogólną narrację o AI ani szeroką prezentację.",
+      "Wejść przez jeden konkretny workflow property management: kontakt, kontekst, brief, wiadomość i ręczna akceptacja.",
     suggestedSystems: systems,
     riskNotes: [
-      "Nie mieszać publicznych faktów z prywatnym kontekstem użytkownika.",
-      "Nie sugerować znajomości wewnętrznych procesów bez źródła.",
-      "Każda wiadomość musi przejść preview i ręczną akceptację przed Resend.",
+      "Demo nie używa prawdziwych danych użytkownika ani danych z uploadu.",
+      "Nie sugerować wiedzy spoza widocznych notatek i źródeł demo.",
+      "Każda wiadomość musi przejść preview i ręczną akceptację.",
     ],
     bestChannel: contact.channel,
-    sources: ["contacts.csv", "messages.csv", "tasks.csv", "research/paste.txt", "resend/webhook-spec.md"],
+    sources: ["demo contacts", "demo messages", "demo tasks", "manual context notes"],
     relatedEdges,
   };
 }

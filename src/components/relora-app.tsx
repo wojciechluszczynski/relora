@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { contacts, graphEdges, type Contact } from "../lib/relora-data";
+import { contacts, graphEdges, organizations, type Contact } from "../lib/relora-data";
 import { organizationSources, type OrganizationSource } from "../lib/organization-sources";
 import type { ResearchBrief } from "../lib/research-engine";
 import { RelationshipGraph } from "./relationship-graph";
-import { Avatar, Badge, Panel } from "./ui";
+import { Badge, Panel } from "./ui";
 
 type EngineStatus = "idle" | "running" | "ready" | "error";
 type NavIcon = "home" | "people" | "context" | "process" | "map" | "message" | "events";
+export type ReloraView = "dashboard" | "contacts" | "process" | "relations" | "sources";
 type OutreachData = {
   contacts: Contact[];
   graphEdges: typeof graphEdges;
@@ -18,24 +19,68 @@ type OutreachData = {
 };
 
 const navigation = [
-  { href: "#dashboard", icon: "home", label: "Pulpit" },
-  { href: "#people", icon: "people", label: "Kontakty" },
-  { href: "#research", icon: "context", label: "Kontekst" },
-  { href: "#crm", icon: "process", label: "Proces" },
-  { href: "#graph", icon: "map", label: "Mapa relacji" },
-  { href: "#composer", icon: "message", label: "Wiadomość" },
-  { href: "#alerts", icon: "events", label: "Zdarzenia" },
+  { href: "/", icon: "home", label: "Pulpit", view: "dashboard" },
+  { href: "/kontakty", icon: "people", label: "Kontakty", view: "contacts" },
+  { href: "/proces", icon: "process", label: "Proces", view: "process" },
+  { href: "/relacje", icon: "map", label: "Relacje", view: "relations" },
+  { href: "/zrodla", icon: "link", label: "Źródła", view: "sources" },
 ] as const;
 
+const viewCopy: Record<ReloraView, { title: string; eyebrow: string; note: string }> = {
+  dashboard: {
+    title: "Pulpit",
+    eyebrow: "Demo bez logowania",
+    note: "Szybki przegląd kontaktów, aktywnych spraw i relacji.",
+  },
+  contacts: {
+    title: "Kontakty",
+    eyebrow: "CRM",
+    note: "Lista kontaktów, karta wybranej osoby i miejsce na dopisanie kontekstu.",
+  },
+  process: {
+    title: "Proces",
+    eyebrow: "Kolejka pracy",
+    note: "Sprawy do obsługi, szkice wiadomości i ręczna akceptacja.",
+  },
+  relations: {
+    title: "Relacje",
+    eyebrow: "Mapa powiązań",
+    note: "Osoby, organizacje, tematy i źródła publiczne w jednym widoku.",
+  },
+  sources: {
+    title: "Źródła",
+    eyebrow: "Publiczne linki",
+    note: "Zweryfikowane logotypy, zdjęcia i adresy używane w demo.",
+  },
+};
+
 const crmColumns = [
-  { id: "todo", label: "Do przygotowania", hint: "zadania z importu" },
-  { id: "draft", label: "Szkic", hint: "wiadomość gotowa do podglądu" },
-  { id: "preview", label: "Podgląd", hint: "wymaga akceptacji" },
+  { id: "context", label: "Kontekst", hint: "brakuje informacji" },
+  { id: "draft", label: "Szkic", hint: "do akceptacji" },
+  { id: "sent", label: "Wysłane", hint: "czeka na reakcję" },
+  { id: "reply", label: "Odpowiedź", hint: "wymaga reakcji" },
+  { id: "followup", label: "Follow-up", hint: "kolejny kontakt" },
+] as const;
+
+const processSteps = [
+  { id: "context", label: "Kontekst" },
+  { id: "draft", label: "Szkic" },
+  { id: "sent", label: "Wysłane" },
+  { id: "reply", label: "Odpowiedź" },
+  { id: "followup", label: "Follow-up" },
 ] as const;
 
 function crmStageLabel(stage: string) {
   if (stage === "draft") return "szkic";
+  if (stage === "context") return "kontekst";
+  if (stage === "sent") return "wysłane";
+  if (stage === "reply") return "odpowiedź";
+  if (stage === "followup") return "follow-up";
   return stage;
+}
+
+function processProgress(status: Contact["communicationStatus"]) {
+  return Math.max(0, processSteps.findIndex((step) => step.id === status));
 }
 
 function channelLabel(channel: string) {
@@ -44,10 +89,48 @@ function channelLabel(channel: string) {
 }
 
 function statusLabel(status: EngineStatus) {
-  if (status === "running") return "analizuję kontekst";
-  if (status === "ready") return "notatka gotowa";
-  if (status === "error") return "analiza przerwana";
+  if (status === "running") return "analiza";
+  if (status === "ready") return "gotowe";
+  if (status === "error") return "błąd";
   return "oczekuje";
+}
+
+const portraitByContactId: Record<string, string> = {
+  "cnt_marta-nowak": "/figma/avatar-jacob.png",
+  "cnt_jakub-zielinski": "/figma/avatar-albert.png",
+  "cnt_ewa-wisniewska": "/figma/avatar-robert.png",
+  "cnt_piotr-kaminski": "/figma/avatar-jacob.png",
+  "cnt_anna-lewandowska": "/figma/avatar-albert.png",
+};
+
+const figmaRequestVisuals = [
+  { icon: "/figma/icon-plumbing.svg", avatar: "/figma/avatar-jacob.png" },
+  { icon: "/figma/icon-electrical.svg", avatar: "/figma/avatar-albert.png" },
+  { icon: "/figma/icon-hvac.svg", avatar: "/figma/avatar-robert.png" },
+  { icon: "/figma/icon-plumbing.svg", avatar: "/figma/avatar-jacob.png" },
+];
+
+const figmaPropertyImages = ["/figma/property-1.png", "/figma/property-2.png", "/figma/property-3.png"];
+const organizationByName = new Map(organizations.map((organization) => [organization.name, organization]));
+
+function portraitFor(contactId: string) {
+  return portraitByContactId[contactId] ?? "/portraits/default.svg";
+}
+
+function PhotoAvatar({ contact, size = "md" }: { contact: Contact; size?: "md" | "lg" }) {
+  return (
+    <span className={`photo-avatar photo-avatar-${size}`}>
+      <img alt="" src={portraitFor(contact.id)} />
+    </span>
+  );
+}
+
+function dataSourceLabel(source: string) {
+  if (source.startsWith("demo:")) return "tryb demo: dane przykładowe";
+  if (source.startsWith("fallback: brak konfiguracji")) return "tryb demo: brak konfiguracji";
+  if (source.startsWith("fallback: ostatni znany stan")) return "tryb demo: ostatni znany stan";
+  if (source.startsWith("fallback:")) return source.replace("fallback:", "tryb demo:");
+  return source;
 }
 
 function Icon({ name }: { name: NavIcon | "collapse" | "decision" | "layers" | "link" }) {
@@ -94,27 +177,6 @@ function Icon({ name }: { name: NavIcon | "collapse" | "decision" | "layers" | "
       {name === "layers" ? <path {...common} d="m12 4 8 4-8 4-8-4zM4 12l8 4 8-4M4 16l8 4 8-4" /> : null}
       {name === "link" ? <path {...common} d="M9.5 7.5 11 6a4 4 0 0 1 5.7 5.7l-1.4 1.4M14.5 16.5 13 18a4 4 0 0 1-5.7-5.7l1.4-1.4M9.5 14.5l5-5" /> : null}
     </svg>
-  );
-}
-
-function RelationshipGlyph() {
-  return (
-    <div className="relationship-glyph" aria-hidden="true">
-      <svg viewBox="0 0 220 160">
-        <path d="M42 82C62 34 120 20 174 48" />
-        <path d="M45 84c35 18 73 26 132 4" />
-        <path d="M94 124c25-24 55-44 86-72" />
-        <circle cx="42" cy="82" r="18" />
-        <circle cx="98" cy="124" r="14" />
-        <circle cx="176" cy="48" r="16" />
-        <circle cx="178" cy="88" r="20" />
-        <circle cx="110" cy="50" r="8" />
-      </svg>
-      <div>
-        <span>Mapa pracy</span>
-        <strong>{contacts.length} kontaktów, {graphEdges.length} relacji</strong>
-      </div>
-    </div>
   );
 }
 
@@ -169,18 +231,21 @@ async function fetchOutreachData() {
   return (await response.json()) as OutreachData;
 }
 
-export function ReloraApp() {
+export function ReloraApp({ view = "dashboard" }: { view?: ReloraView }) {
   const [outreachData, setOutreachData] = useState<OutreachData>({
     contacts,
     graphEdges,
     organizationSources,
-    source: "fallback: import lokalny",
+    source: "demo: dane przykładowe bez logowania",
     updatedAt: new Date().toISOString(),
   });
   const [selectedId, setSelectedId] = useState(contacts[0].id);
   const [brief, setBrief] = useState<ResearchBrief | null>(null);
   const [engineStatus, setEngineStatus] = useState<EngineStatus>("idle");
   const [menuCollapsed, setMenuCollapsed] = useState(false);
+  const [contextDraft, setContextDraft] = useState("");
+  const [contextByContact, setContextByContact] = useState<Record<string, string[]>>({});
+  const [searchQuery, setSearchQuery] = useState("");
   const liveContacts = outreachData.contacts.length > 0 ? outreachData.contacts : contacts;
   const liveGraphEdges = outreachData.graphEdges.length > 0 ? outreachData.graphEdges : graphEdges;
   const liveOrganizationSources = outreachData.organizationSources.length > 0 ? outreachData.organizationSources : organizationSources;
@@ -193,6 +258,31 @@ export function ReloraApp() {
     () => liveGraphEdges.filter((edge) => edge.from === selected.id || edge.to === selected.id),
     [liveGraphEdges, selected.id],
   );
+  const selectedOrganization = organizationByName.get(selected.organization);
+  const selectedContext = contextByContact[selected.id] ?? [];
+  const briefContext = brief ? [...brief.userContext, ...selectedContext.map((item) => `Dopisane w demo: ${item}`)] : selectedContext;
+  const copy = viewCopy[view];
+  const selectedProgress = processProgress(selected.communicationStatus);
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const visibleContacts = normalizedSearch
+    ? liveContacts.filter((contact) =>
+        [contact.name, contact.organization, contact.subject, contact.notes, ...contact.tags].join(" ").toLowerCase().includes(normalizedSearch),
+      )
+    : liveContacts;
+  const visibleSources = normalizedSearch
+    ? liveOrganizationSources.filter((source) => [source.title, source.authority, source.url ?? "", ...source.facts].join(" ").toLowerCase().includes(normalizedSearch))
+    : liveOrganizationSources;
+
+  function addContextNote() {
+    const value = contextDraft.trim();
+    if (!value) return;
+
+    setContextByContact((current) => ({
+      ...current,
+      [selected.id]: [...(current[selected.id] ?? []), value],
+    }));
+    setContextDraft("");
+  }
 
   async function runResearch(contact: Contact) {
     setEngineStatus("running");
@@ -261,11 +351,11 @@ export function ReloraApp() {
     <main className={`app-shell ${menuCollapsed ? "menu-collapsed" : ""}`}>
       <aside className={`side-rail ${menuCollapsed ? "is-collapsed" : ""}`} aria-label="Nawigacja Relora">
         <div className="rail-top">
-          <a className="brand" href="#dashboard" aria-label="Relora">
+          <a className="brand" href="/" aria-label="Relora">
             <span className="brand-mark">R</span>
             <span className="brand-copy">
               <strong>Relora</strong>
-              <small>inteligencja relacji</small>
+              <small>CRM</small>
             </span>
           </a>
           <button
@@ -279,8 +369,8 @@ export function ReloraApp() {
         </div>
 
         <nav className="nav-list">
-          {navigation.map(({ href, icon, label }) => (
-            <a href={href} key={href}>
+          {navigation.map(({ href, icon, label, view: itemView }) => (
+            <a aria-current={itemView === view ? "page" : undefined} href={href} key={href}>
               <Icon name={icon} />
               <span className="nav-label">{label}</span>
             </a>
@@ -288,301 +378,308 @@ export function ReloraApp() {
         </nav>
 
         <div className="rail-card">
-          <span>Dane</span>
-          <strong>{outreachData.source}</strong>
-          <p>Odświeżanie co 15 sekund. Ostatni odczyt: {new Date(outreachData.updatedAt).toLocaleTimeString("pl-PL")}.</p>
+          <span>Źródło</span>
+          <strong>{dataSourceLabel(outreachData.source)}</strong>
+          <p>{new Date(outreachData.updatedAt).toLocaleTimeString("pl-PL")}</p>
         </div>
       </aside>
 
       <div className="workspace">
-        <header className="hero" id="dashboard">
-          <div className="hero-copy">
-            <span className="eyebrow">Relora · relacje · kontekst · wysyłka</span>
-            <h1>Jedno miejsce do pracy nad relacją przed pierwszą wiadomością.</h1>
-            <p>
-              Po lewej wybierasz kontakt. W środku widzisz notatkę analityczną, źródła, status sprawy,
-              mapę powiązań i szkic wiadomości. Nic nie wychodzi bez podglądu i ręcznej akceptacji.
-            </p>
-            <div className="hero-strip" aria-label="Najważniejsze zasady pracy">
-              <span>Fakty publiczne osobno</span>
-              <span>Kontekst użytkownika osobno</span>
-              <span>Podgląd przed wysyłką</span>
-              <span>Resend dopiero po akceptacji</span>
-            </div>
+        <header className="topbar">
+          <div>
+            <span className="eyebrow">{copy.eyebrow}</span>
+            <h1>{copy.title}</h1>
+            <p className="topbar-note">{copy.note}</p>
           </div>
-
-          <div className="hero-side">
-            <RelationshipGlyph />
-            <div className="engine-card" aria-live="polite">
-              <span>Wybrany kontakt</span>
-              <strong>{statusLabel(engineStatus)}</strong>
-              <p>{selected.name}</p>
-              <button className="button button-primary" onClick={() => runResearch(selected)} type="button">
-                Odśwież analizę
-              </button>
-            </div>
+          <label className="global-search">
+            <input
+              aria-label="Szukaj osoby, relacji lub tematu"
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Szukaj osoby, relacji, tematu..."
+              value={searchQuery}
+            />
+          </label>
+          <div className="topbar-actions">
+            <Badge tone={outreachData.source.startsWith("demo") || outreachData.source.startsWith("fallback") ? "gold" : "green"}>
+              {outreachData.source.startsWith("demo") || outreachData.source.startsWith("fallback") ? "demo" : "na żywo"}
+            </Badge>
+            <a className="button" href="/kontakty">Dodaj kontekst</a>
+            <a className="button button-primary" href="/proces">
+              Nowa wiadomość
+            </a>
           </div>
         </header>
 
-        <section className="work-grid" aria-label="Najważniejsze informacje robocze">
-          <div>
-            <Icon name="decision" />
-            <span>Do decyzji</span>
-            <strong>{liveContacts.length} szkiców</strong>
-            <small>Każdy wymaga podglądu przed wysyłką.</small>
-          </div>
+        <section className="metric-grid" aria-label="Metryki">
           <div>
             <Icon name="people" />
-            <span>Teraz pracujesz nad</span>
+            <span>Kontakty</span>
+            <strong>{liveContacts.length}</strong>
+            <small>rekordów w przestrzeni</small>
+          </div>
+          <div>
+            <PhotoAvatar contact={selected} />
+            <span>Wybrany kontakt</span>
             <strong>{selected.name}</strong>
             <small>{selected.organization}</small>
           </div>
           <div>
-            <Icon name="layers" />
-            <span>Granica danych</span>
-            <strong>2 warstwy</strong>
-            <small>Fakty publiczne nie są mieszane z Twoją notatką.</small>
+            <Icon name="context" />
+            <span>Brief</span>
+            <strong>{statusLabel(engineStatus)}</strong>
+            <small>{brief?.confidence ?? 0}% kompletności</small>
           </div>
           <div>
             <Icon name="link" />
-            <span>Powiązania kontaktu</span>
-            <strong>{relatedEdges.length} relacje</strong>
-            <small>Organizacja i tematy dla wybranej osoby.</small>
+            <span>Relacje</span>
+            <strong>{relatedEdges.length}</strong>
+            <small>aktywnych powiązań</small>
           </div>
         </section>
 
-        <section className="content-grid content-grid-people" id="people">
-          <Panel title="Kontakty" eyebrow="osoby z paczki źródłowej">
-            <div className="people-list">
-              {liveContacts.map((person) => (
+        {view === "dashboard" || view === "process" || view === "contacts" ? (
+          <section className="process-overview" aria-label="Postęp komunikacji">
+            <div className="process-overview-head">
+              <div>
+                <span>Postęp komunikacji</span>
+                <strong>{selected.name}</strong>
+              </div>
+              <p>{selected.nextStep}</p>
+            </div>
+            <div className="process-steps">
+              {processSteps.map((step, index) => (
+                <span
+                  className={`${index < selectedProgress ? "is-done" : ""} ${index === selectedProgress ? "is-current" : ""}`}
+                  key={step.id}
+                >
+                  {step.label}
+                </span>
+              ))}
+            </div>
+            <div className="process-meta">
+              <span>Ostatni kontakt: {selected.lastContactAt}</span>
+              <span>Status: {crmStageLabel(selected.stage)}</span>
+            </div>
+          </section>
+        ) : null}
+
+        {(view === "dashboard" || view === "contacts" || view === "process") ? <section className={`reference-grid ${view !== "dashboard" ? "reference-grid-single" : ""}`}>
+          {view !== "process" ? <section className="reference-panel" id="people">
+            <div className="reference-head">
+              <h2>Kontakty</h2>
+              <a href="/kontakty">Zobacz wszystko</a>
+            </div>
+            <div className="reference-list">
+              {visibleContacts.length > 0 ? visibleContacts.map((person) => (
                 <button
                   aria-pressed={person.id === selected.id}
-                  className={`person-card ${person.id === selected.id ? "is-selected" : ""}`}
+                  className={`reference-row ${person.id === selected.id ? "is-selected" : ""}`}
                   key={person.id}
                   onClick={() => setSelectedId(person.id)}
                   type="button"
                 >
-                  <span className="person-card-main">
-                    <Avatar initials={person.initials} />
-                    <span>
-                      <strong>{person.name}</strong>
-                      <small>{person.organization}</small>
+                  <PhotoAvatar contact={person} />
+                  <span className="reference-main">
+                    <strong>{person.name}</strong>
+                    <small>{person.organization}</small>
+                  </span>
+                  <span className="reference-meta">{crmStageLabel(person.stage)}</span>
+                </button>
+              )) : <div className="empty-lane">Brak kontaktów dla tego filtra</div>}
+            </div>
+          </section> : null}
+
+          {view !== "contacts" ? <section className="reference-panel" id="crm">
+            <div className="reference-head">
+              <h2>Proces kontaktu</h2>
+              <a href="/proces">Zobacz wszystko</a>
+            </div>
+            <div className="reference-list">
+              {visibleContacts.slice(0, 4).map((person, index) => (
+                <button
+                  aria-pressed={person.id === selected.id}
+                  className={`reference-row reference-row-wide ${person.id === selected.id ? "is-selected" : ""}`}
+                  key={person.id}
+                  onClick={() => setSelectedId(person.id)}
+                  type="button"
+                >
+                  <span className="request-main">
+                    <span
+                      aria-hidden="true"
+                      className="request-icon"
+                      style={{ backgroundImage: `url(${figmaRequestVisuals[index % figmaRequestVisuals.length].icon})` }}
+                    />
+                    <span className="reference-main">
+                      <strong>{person.subject}</strong>
+                      <small>{person.taskId}</small>
                     </span>
                   </span>
-                  <span className="tag-row">
-                    <Badge tone="gold">{crmStageLabel(person.stage)}</Badge>
-                    <Badge tone="teal">{channelLabel(person.channel)}</Badge>
+                  <span className="reference-issue">{person.organization}</span>
+                  <span className="figma-avatar">
+                    <img alt="" src={figmaRequestVisuals[index % figmaRequestVisuals.length].avatar} />
                   </span>
-                  <span className="person-note">{person.notes}</span>
+                  <span className="reference-owner">{person.name}</span>
                 </button>
               ))}
             </div>
-          </Panel>
+          </section> : null}
+        </section> : null}
 
-          <Panel title="Karta kontaktu" eyebrow={selected.source}>
-            <article className="person-detail">
-              <div className="identity-row">
-                <Avatar initials={selected.initials} size="lg" />
-                <div>
-                  <h2>{selected.name}</h2>
-                  <p>{selected.organization}</p>
-                  <div className="tag-row">
-                    <Badge tone="gold">CRM: {crmStageLabel(selected.stage)}</Badge>
-                    <Badge tone="blue">zadanie: {selected.taskId}</Badge>
-                    <Badge tone="teal">kanał: {channelLabel(selected.channel)}</Badge>
+        {(view === "dashboard" || view === "contacts" || view === "process") ? <section className={`crm-workspace crm-workspace-${view}`}>
+          <div className="center-stack">
+            {(view === "dashboard" || view === "contacts") ? <Panel title="Karta kontaktu" eyebrow={selected.source}>
+              <article className="person-detail">
+                <img className="contact-cover" alt="" src={selectedOrganization?.imageUrl ?? "/scenes/lodz-workspace.svg"} />
+                <div className="identity-row">
+                  <PhotoAvatar contact={selected} size="lg" />
+                  <div>
+                    <h2>{selected.name}</h2>
+                    <p>{selected.organization}</p>
+                    {selectedOrganization ? (
+                      <a className="org-link" href={selectedOrganization.websiteUrl} rel="noreferrer" target="_blank">
+                        <img alt="" src={selectedOrganization.logoUrl} />
+                        Oficjalny profil organizacji
+                      </a>
+                    ) : null}
+                    <div className="tag-row">
+                      <Badge tone="gold">{crmStageLabel(selected.stage)}</Badge>
+                      <Badge tone="blue">{selected.taskId}</Badge>
+                      <Badge tone="teal">{channelLabel(selected.channel)}</Badge>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="detail-grid">
-                <div className="data-box">
-                  <span>Fakty publiczne</span>
-                  <p>{brief?.publicFacts[0] ?? `Organizacja: ${selected.organization}.`}</p>
-                </div>
                 <div className="data-box data-box-private">
-                  <span>Kontekst użytkownika</span>
+                  <span>Kontekst prywatny</span>
                   <p>{selected.notes}</p>
                 </div>
-              </div>
-            </article>
-          </Panel>
-        </section>
-
-        <section className="content-grid" id="research">
-          <Panel title="Notatka analityczna" eyebrow="generowana przez /api/research">
-            {brief ? (
-              <div className="research-stack">
-                <div className="research-score">
-                  <span>Pewność</span>
-                  <strong>{brief.confidence}%</strong>
-                </div>
-                <div className="data-box">
-                  <span>Najlepsze wejście</span>
-                  <p>{brief.suggestedAngle}</p>
-                </div>
-                <div className="data-box">
-                  <span>Proponowane kierunki</span>
-                  <ul>
-                    {brief.suggestedSystems.map((system) => (
-                      <li key={system}>{system}</li>
+                {selectedContext.length > 0 ? (
+                  <div className="context-chips" aria-label="Dopisany kontekst">
+                    {selectedContext.map((item) => (
+                      <span key={item}>{item}</span>
                     ))}
-                  </ul>
-                </div>
-                <div className="data-box">
-                  <span>Źródła</span>
-                  <p>{brief.sources.join(", ")}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="empty-state">Analiza czeka na wynik.</div>
-            )}
-          </Panel>
-
-          <Panel title="Granica danych" eyebrow="fakty publiczne i kontekst użytkownika są pokazane osobno">
-            {brief ? (
-              <div className="boundary-grid">
-                <div className="data-box">
-                  <span>Fakty publiczne</span>
-                  <ul>
-                    {brief.publicFacts.map((fact) => (
-                      <li key={fact}>{fact}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="data-box data-box-private">
-                  <span>Kontekst użytkownika</span>
-                  <ul>
-                    {brief.userContext.map((fact) => (
-                      <li key={fact}>{fact}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <div className="empty-state">Brak briefu do pokazania.</div>
-            )}
-          </Panel>
-        </section>
-
-        <section className="content-grid content-grid-crm" id="crm">
-          <Panel title="Proces" eyebrow="statusy z importu, bez sztucznych leadów">
-            <div className="crm-board">
-              {crmColumns.map((column) => (
-                <section className="crm-column" key={column.id}>
-                  <div className="crm-column-head">
-                    <strong>{column.label}</strong>
-                    <span>{column.hint}</span>
                   </div>
-                  {column.id === "draft" ? (
-                    liveContacts.map((person) => (
-                      <button
-                        className={`crm-card ${person.id === selected.id ? "is-selected" : ""}`}
-                        key={person.id}
-                        onClick={() => setSelectedId(person.id)}
-                        type="button"
-                      >
-                        <strong>{person.name}</strong>
-                        <span>{person.subject}</span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="empty-lane">Brak realnych rekordów w tej kolumnie.</div>
-                  )}
-                </section>
-              ))}
-            </div>
-          </Panel>
+                ) : null}
+              </article>
+            </Panel> : null}
 
-          <Panel title="Oś czasu" eyebrow="historia kontaktu i następny krok">
-            <ol className="timeline">
-              <li>
-                <span>Import</span>
-                <p>Dodano kontakt, wiadomość i zadanie z paczki źródłowej.</p>
-              </li>
-              <li>
-                <span>Analiza</span>
-                <p>Brief dla {selected.name} budowany na faktach publicznych i kontekście użytkownika.</p>
-              </li>
-              <li>
-                <span>Następny krok</span>
-                <p>Podgląd wiadomości, ręczna akceptacja i dopiero potem wysyłka przez Resend.</p>
-              </li>
-            </ol>
-          </Panel>
-        </section>
+            {view === "contacts" ? <Panel title="Dodaj kontekst" eyebrow="lokalnie w demo">
+              <div className="context-editor">
+                <p>
+                  Dopisz fakt, preferencję albo ograniczenie dla wybranego kontaktu. Notatka zostaje w tej sesji demo.
+                </p>
+                <label>
+                  <span>Nowa notatka</span>
+                  <textarea
+                    onChange={(event) => setContextDraft(event.target.value)}
+                    placeholder="Np. właściciel preferuje SMS po każdej awarii i tygodniowy raport w piątek."
+                    rows={4}
+                    value={contextDraft}
+                  />
+                </label>
+                <button className="button button-primary" onClick={addContextNote} type="button">
+                  Dodaj do kontaktu
+                </button>
+              </div>
+            </Panel> : null}
 
-        <Panel title="Mapa relacji" eyebrow="osoba, organizacja i tematy z importu">
-          <RelationshipGraph graphEdges={liveGraphEdges} selectedId={selected.id} onSelectPerson={setSelectedId} />
-          <div className="graph-summary">
-            <span>Aktywne relacje dla {selected.name}</span>
-            <strong>{relatedEdges.length}</strong>
+            {view === "contacts" ? <Panel title="Brief" eyebrow={brief ? `${brief.confidence}% kompletności` : "w toku"}>
+              {brief ? (
+                <div className="research-stack" id="research">
+                  <div className="data-box">
+                    <span>Zakres</span>
+                    <p>Profil kontaktu, relacje, źródła publiczne i dopisane notatki. Wysyłka zawsze wymaga akceptacji.</p>
+                  </div>
+                  <div className="data-box">
+                    <span>Kąt wejścia</span>
+                    <p>{brief.suggestedAngle}</p>
+                  </div>
+                  <div className="compact-list">
+                    {briefContext.slice(0, 5).map((item) => (
+                      <span key={item}>{item}</span>
+                    ))}
+                  </div>
+                  <div className="compact-list">
+                    {brief.suggestedSystems.slice(0, 4).map((system) => (
+                      <span key={system}>{system}</span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="empty-state">W toku</div>
+              )}
+            </Panel> : null}
           </div>
-        </Panel>
 
-        <section id="composer">
-          <Panel title="Wiadomość" eyebrow="podgląd przed Resend">
-            <div className="composer-grid">
-              <form className="draft-form">
-                <label>
-                  Kontakt
-                  <input value={selected.name} readOnly />
-                </label>
-                <label>
-                  Temat
-                  <input value={selected.subject} readOnly />
-                </label>
-                <label>
-                  Treść źródłowa
-                  <textarea value={selected.message} readOnly rows={8} />
-                </label>
-              </form>
+          {(view === "dashboard" || view === "process") ? <div className="right-stack">
+            <Panel title="Kolejka" eyebrow="ręczna akceptacja" >
+              <div className="crm-board">
+                {crmColumns.map((column) => (
+                  <section className="crm-column" key={column.id}>
+                    <div className="crm-column-head">
+                      <strong>{column.label}</strong>
+                      <span>{visibleContacts.filter((person) => person.communicationStatus === column.id).length}</span>
+                    </div>
+                    {visibleContacts.some((person) => person.communicationStatus === column.id) ? (
+                      visibleContacts.filter((person) => person.communicationStatus === column.id).map((person) => (
+                        <button
+                          className={`crm-card ${person.id === selected.id ? "is-selected" : ""}`}
+                          key={person.id}
+                          onClick={() => setSelectedId(person.id)}
+                          type="button"
+                        >
+                          <strong>{person.name}</strong>
+                          <span>{person.subject}</span>
+                          <small>{person.nextStep}</small>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="empty-lane">Pusto</div>
+                    )}
+                  </section>
+                ))}
+              </div>
+            </Panel>
 
-              <article className="message-preview">
-                <span>Podgląd wiadomości</span>
+            <Panel title="Wiadomość" eyebrow="podgląd przed wysyłką">
+              <article className="message-preview" id="composer">
+                <span>{selected.name}</span>
                 <h3>{selected.subject}</h3>
                 <p>{selected.message}</p>
                 <div className="preview-actions">
-                  <Badge tone="gold">wymagany podgląd</Badge>
-                  <button className="button" type="button">
-                    Zapisz szkic
-                  </button>
-                  <button className="button button-primary" type="button">
-                    Akceptuj podgląd
-                  </button>
+                  <button className="button" type="button">Zapisz</button>
+                  <button className="button button-primary" type="button">Akceptuj</button>
                 </div>
               </article>
-            </div>
+            </Panel>
+          </div> : null}
+        </section> : null}
+
+        {(view === "dashboard" || view === "relations" || view === "sources") ? <section className={`bottom-grid ${view !== "dashboard" ? "bottom-grid-single" : ""}`}>
+          {view !== "sources" ? (
+          <Panel title="Mapa powiązań" eyebrow={`${liveGraphEdges.length} relacji`}>
+            <RelationshipGraph graphEdges={liveGraphEdges} selectedId={selected.id} onSelectPerson={setSelectedId} />
           </Panel>
-        </section>
+          ) : null}
 
-        <Panel title="Zdarzenia" eyebrow="resend/webhook-spec.md">
-          <div className="alerts-center" id="alerts">
-            <strong>Brak realnych alertów w dostarczonych danych.</strong>
-            <p>
-              Relora nie dopisuje aktywności bez źródła. Zdarzenia pojawią się po webhookach Resend
-              zapisanych w Supabase: wysłano, dostarczono, otwarto, kliknięto, odpisano, odrzucono albo nie wysłano.
-            </p>
-          </div>
-        </Panel>
-
-        <Panel title="Źródła organizacyjne" eyebrow="schematy UMŁ i strona władz miasta">
-          <div className="source-grid">
-            {liveOrganizationSources.map((source) => (
-              <article className="source-card" key={source.id}>
-                <span>{source.kind === "pdf" ? "PDF" : "Strona www"}</span>
-                <h3>{source.title}</h3>
-                <p>{source.authority}</p>
-                {source.validFrom ? <small>Zakres: {source.validFrom}{source.validTo ? ` - ${source.validTo}` : ""}</small> : null}
-                <ul>
-                  {source.facts.map((fact) => (
-                    <li key={fact}>{fact}</li>
-                  ))}
-                </ul>
-                {source.url ? <a href={source.url}>Otwórz źródło</a> : null}
-              </article>
-            ))}
-          </div>
-        </Panel>
+          {view !== "relations" ? <Panel title="Źródła" eyebrow={`${liveOrganizationSources.length} rekordy`}>
+            <div className="source-list">
+              {visibleSources.map((source, index) => (
+                <article className="source-row" key={source.id}>
+                  <img alt="" src={source.imageUrl ?? figmaPropertyImages[index % figmaPropertyImages.length]} />
+                  <span>{source.kind === "pdf" ? "PDF" : "WWW"}</span>
+                  <strong>{source.title}</strong>
+                  <small>{source.authority}</small>
+                  {source.url ? (
+                    <a href={source.url} rel="noreferrer" target="_blank">
+                      Otwórz źródło
+                    </a>
+                  ) : null}
+                </article>
+              ))}
+              {visibleSources.length === 0 ? <div className="empty-lane">Brak źródeł dla tego filtra</div> : null}
+            </div>
+          </Panel> : null}
+        </section> : null}
       </div>
     </main>
   );

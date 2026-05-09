@@ -1,31 +1,34 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { graphEdges as fallbackGraphEdges } from "../lib/relora-data";
+import { contacts, graphEdges as fallbackGraphEdges, organizations } from "../lib/relora-data";
 
-type GraphNode = {
-  x: number;
-  y: number;
-  type: "person" | "org" | "topic";
-  label: string;
+const portraitByContactId: Record<string, string> = {
+  "cnt_marta-nowak": "/figma/avatar-jacob.png",
+  "cnt_jakub-zielinski": "/figma/avatar-albert.png",
+  "cnt_ewa-wisniewska": "/figma/avatar-robert.png",
+  "cnt_piotr-kaminski": "/figma/avatar-jacob.png",
+  "cnt_anna-lewandowska": "/figma/avatar-albert.png",
 };
 
-const graphNodes: Record<string, GraphNode> = {
-  "cnt_tomasz-piotrowski": { x: 12, y: 26, type: "person", label: "Tomasz Piotrowski" },
-  "cnt_lukasz-goss": { x: 13, y: 66, type: "person", label: "Łukasz Goss" },
-  "cnt_adam-pustelnik": { x: 36, y: 20, type: "person", label: "Adam Pustelnik" },
-  "cnt_pawel-blizniuk": { x: 36, y: 76, type: "person", label: "Paweł Bliźniuk" },
-  "cnt_wojciech-rosicki": { x: 60, y: 32, type: "person", label: "Wojciech Rosicki" },
-  org_uml: { x: 62, y: 55, type: "org", label: "Urząd Miasta Łodzi" },
-  org_holding: { x: 39, y: 48, type: "org", label: "Łódzki Holding" },
-  org_sejm: { x: 61, y: 82, type: "org", label: "Sejm RP" },
-  "topic_eventy-miejskie": { x: 84, y: 18, type: "topic", label: "eventy miejskie" },
-  topic_komunikacja: { x: 86, y: 38, type: "topic", label: "komunikacja" },
-  topic_governance: { x: 58, y: 12, type: "topic", label: "governance" },
-  topic_inwestorzy: { x: 84, y: 64, type: "topic", label: "inwestorzy" },
-  topic_AI: { x: 84, y: 84, type: "topic", label: "AI" },
-  "topic_obsługa-mieszkańców": { x: 82, y: 51, type: "topic", label: "obsługa mieszkańców" },
+const topicLabels: Record<string, string> = {
+  topic_utrzymanie: "utrzymanie",
+  topic_raporty: "raporty",
+  topic_sla: "SLA",
+  topic_checkin: "check-in",
+  topic_inwestorzy: "inwestorzy",
+  topic_umowy: "umowy",
 };
+
+function orgForContact(contactId: string, graphEdges: typeof fallbackGraphEdges) {
+  const orgEdge = graphEdges.find((edge) => edge.from === contactId && edge.label === "organization");
+  return organizations.find((organization) => organization.id === orgEdge?.to);
+}
+
+function topicsForContact(contactId: string, graphEdges: typeof fallbackGraphEdges) {
+  return graphEdges
+    .filter((edge) => edge.from === contactId && edge.label === "topic")
+    .map((edge) => topicLabels[edge.to] ?? edge.to.replace("topic_", ""));
+}
 
 export function RelationshipGraph({
   graphEdges = fallbackGraphEdges,
@@ -36,52 +39,68 @@ export function RelationshipGraph({
   selectedId: string;
   onSelectPerson: (id: string) => void;
 }) {
-  const activeEdges = graphEdges.filter((edge) => edge.from === selectedId || edge.to === selectedId);
+  const selectedContact = contacts.find((contact) => contact.id === selectedId) ?? contacts[0];
+  const grouped = organizations.map((organization) => ({
+    organization,
+    people: contacts.filter((contact) => orgForContact(contact.id, graphEdges)?.id === organization.id),
+  }));
 
   return (
-    <div className="graph-canvas" id="graph">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        {graphEdges.map((edge) => {
-          const from = graphNodes[edge.from];
-          const to = graphNodes[edge.to];
-          if (!from || !to) {
-            return null;
-          }
+    <div className="org-graph" id="graph">
+      <div className="org-graph-header">
+        <div>
+          <span>Mapa relacji</span>
+          <strong>{selectedContact.name}</strong>
+        </div>
+        <div className="org-graph-legend">
+          <span>wybrany</span>
+          <span>organizacja</span>
+          <span>temat</span>
+        </div>
+      </div>
 
-          const active = edge.from === selectedId || edge.to === selectedId;
+      <div className="org-directory">
+        {grouped.map(({ organization, people }) => (
+          <section className={`org-column ${people.some((person) => person.id === selectedId) ? "is-active" : ""}`} key={organization.id}>
+            <header>
+              <img alt="" src={organization.logoUrl} />
+              <div>
+                <strong>{organization.name}</strong>
+                <a href={organization.websiteUrl} rel="noreferrer" target="_blank">
+                  oficjalny link
+                </a>
+              </div>
+            </header>
 
-          return (
-            <line
-              key={`${edge.from}-${edge.to}`}
-              x1={from.x}
-              y1={from.y}
-              x2={to.x}
-              y2={to.y}
-              className={active ? "is-active" : undefined}
-            />
-          );
-        })}
-      </svg>
+            <div className="org-people">
+              {people.length > 0 ? (
+                people.map((person) => {
+                  const topics = topicsForContact(person.id, graphEdges);
 
-      {Object.entries(graphNodes).map(([id, node]) => {
-        const isPerson = node.type === "person";
-        const isActive = id === selectedId || activeEdges.some((edge) => edge.from === id || edge.to === id);
-
-        return (
-          <button
-            aria-pressed={id === selectedId}
-            className={`graph-node graph-node-${node.type} ${isActive ? "is-active" : ""}`}
-            disabled={!isPerson}
-            key={id}
-            onClick={() => onSelectPerson(id)}
-            style={{ "--x": `${node.x}%`, "--y": `${node.y}%` } as CSSProperties}
-            type="button"
-          >
-            <strong>{node.label}</strong>
-            <span>{node.type}</span>
-          </button>
-        );
-      })}
+                  return (
+                    <button
+                      aria-pressed={person.id === selectedId}
+                      className={`org-person ${person.id === selectedId ? "is-selected" : ""}`}
+                      key={person.id}
+                      onClick={() => onSelectPerson(person.id)}
+                      type="button"
+                    >
+                      <img alt="" src={portraitByContactId[person.id]} />
+                      <span>
+                        <strong>{person.name}</strong>
+                        <small>{person.nextStep}</small>
+                      </span>
+                      <em>{topics.length > 0 ? topics.join(", ") : "brak tematów"}</em>
+                    </button>
+                  );
+                })
+              ) : (
+                <p>Brak kontaktów w demo</p>
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }

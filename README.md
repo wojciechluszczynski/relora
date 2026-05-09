@@ -1,46 +1,77 @@
 # Relora
 
-B2B SaaS do zarządzania relacjami biznesowymi i outreachem. Zamiast klasycznego CRM — graph relacji, automatyczne briefy o kontaktach i gotowe playbooki wiadomości dostosowane do kontekstu rozmowy.
+B2B SaaS prototype do zarzadzania relacjami biznesowymi, people intelligence i outreachem zatwierdzanym przez czlowieka.
 
----
+Zamiast klasycznego CRM, Relora laczy graf relacji, kontekst kontaktow, research briefy, playbooki wiadomosci i zrodla danych w jednym interfejsie.
 
-## Co to jest
+## Co To Jest
 
-Narzędzie dla sprzedawców i founders prowadzących outreach do konkretnych osób, nie do list mailingowych. Relora śledzi kto zna kogo, generuje research brief przed rozmową i pomaga pisać wiadomości, które brzmią jak od człowieka, który zrobił pracę domową.
-
----
+Narzędzie dla founders, sprzedawcow i osob prowadzacych precyzyjny outreach do konkretnych ludzi, a nie anonimowych list mailingowych. Relora pomaga sprawdzic kto zna kogo, przygotowac brief przed rozmowa i napisac wiadomosc osadzona w realnym kontekscie relacji.
 
 ## Funkcje
 
-- **Graf relacji** — wizualizacja połączeń między kontaktami i organizacjami
-- **People Intelligence** — automatyczne briefy o kontakcie przed rozmową
-- **CRM Kanban** — pipeline outreachowy z etapami (szkic → podgląd → wysłany)
-- **Composer** — przygotowanie wiadomości z kontekstem relacji
-- **Alerty** — powiadomienia Supabase realtime o zmianach statusu
-- **Resend** — śledzenie dostarczalności wiadomości
-
----
+- Graf relacji do mapowania osob, organizacji i wprowadzen
+- Karty kontaktow z notatkami, kontekstem i historia interakcji
+- People intelligence i research briefy przed rozmowa
+- Outreach cockpit z podgladem wiadomosci przed wysylka
+- Widok zrodel rozdzielajacy public facts od private relationship context
+- API pod Resend oraz dokumentacja webhookow
+- Migracje Supabase dla schematu bazy i RLS
+- Polskie etykiety interfejsu i osobne trasy aplikacji
 
 ## Stack
 
-| Warstwa | Technologia |
-|---|---|
-| Framework | Next.js 14 (App Router) + TypeScript |
-| Baza danych | Supabase (Postgres, Auth, Realtime) |
-| Email | Resend |
-| Style | Tailwind CSS |
+- Next.js 16
+- React 19
+- TypeScript
+- Supabase-ready data model
+- Resend-ready email flow
 
----
+## Struktura Projektu
 
-## Lokalne uruchomienie
+```text
+src/app/              trasy Next.js i endpointy API
+src/components/       glowny interfejs Relora i komponenty UI
+src/lib/              dane demo, logika researchu i zrodla organizacji
+public/               fonty, portrety i assety wizualne
+docs/                 notatki produktowe i specyfikacje
+examples/             przykladowe dane wejsciowe i parser notes
+resend/               dokumentacja webhookow Resend
+supabase/migrations/  schema SQL i migracje RLS
+```
+
+## Lokalne Uruchomienie
 
 ```bash
 npm install
 npm run dev
 ```
 
-Aplikacja dostępna pod `http://localhost:3000`.
+Aplikacja bedzie dostepna pod `http://localhost:3000`.
+
+## Zmienne Srodowiskowe
+
+Skopiuj `.env.example` do `.env.local` i uzupelnij klucze dla uslug, ktore chcesz wlaczyc:
 
 ```bash
-npm run build   # produkcyjny build
+cp .env.example .env.local
 ```
+
+Statyczny prototyp moze dzialac bez live keys. Klucze Supabase, Resend i providerow AI sa potrzebne dopiero dla podlaczonych flow backendowych.
+
+## Build
+
+```bash
+npm run build
+```
+
+## Deployment
+
+Projekt jest gotowy do GitHuba i deploymentu w stylu Vercel:
+
+```bash
+git remote -v
+git push origin main
+```
+
+Przed wlaczeniem produkcyjnych integracji ustaw zmienne srodowiskowe w platformie deploymentowej.

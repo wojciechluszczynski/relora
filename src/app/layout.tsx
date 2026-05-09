@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Relora",
-  description: "Kokpit relacji, analizy, CRM i wysyłki z podglądem wiadomości.",
+  description: "CRM do kontaktów, kontekstu, relacji i ręcznie akceptowanych wiadomości.",
 };
 
 export default function RootLayout({
